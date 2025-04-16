@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 11/04/2025 às 20:48
+-- Tempo de geração: 16/04/2025 às 20:41
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -62,16 +62,19 @@ CREATE TABLE `landing_pages` (
   `educacao` text DEFAULT NULL,
   `carreira` text DEFAULT NULL,
   `contato` text DEFAULT NULL,
-  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp(),
+  `publico` tinyint(1) DEFAULT 0,
+  `subtitulo_principal` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Despejando dados para a tabela `landing_pages`
 --
 
-INSERT INTO `landing_pages` (`id`, `user_id`, `titulo_principal`, `subtitulo`, `sobre`, `educacao`, `carreira`, `contato`, `criado_em`) VALUES
-(1, 8, 'Cozinheira', 'Cozinha', 'aqui é meu portfilio de cozinha e meu sonho de ser cozinheira', 'safdsafsdaDSF', 'FDSFSFDS', 'DFSASADSA@GMAIL.COM', '2025-04-11 16:13:16'),
-(2, 4, 'ewqdas', 'dsadfasf', 'asdsad', 'asdsa', 'dasdasd', 'asdsdadsa', '2025-04-11 16:19:51');
+INSERT INTO `landing_pages` (`id`, `user_id`, `titulo_principal`, `subtitulo`, `sobre`, `educacao`, `carreira`, `contato`, `criado_em`, `publico`, `subtitulo_principal`) VALUES
+(3, 7, 'Cozinheira', 'Conzinhar', 'Cozinho', 'doutorado em conzinhar', 'cozinhei para o Eric jackan e ele gostou', 'Robert@gmail.com', '2025-04-16 13:12:07', 1, 'cozi'),
+(4, 4, 'O pai', NULL, 'criador de tudo', 'quando necessario', 'top', 'não gosto', '2025-04-16 13:49:50', 0, 'ta on'),
+(5, 8, '', NULL, '', '', '', '', '2025-04-16 16:24:52', 0, '');
 
 -- --------------------------------------------------------
 
@@ -95,8 +98,11 @@ CREATE TABLE `plano_acao` (
 
 INSERT INTO `plano_acao` (`id`, `user_id`, `titulo`, `descricao`, `prazo`, `concluida`, `criado_em`) VALUES
 (10, 8, 'dsajfjiasfmksdf', 'sadfgweafsadf', '2025-04-28', 1, '2025-04-11 13:44:42'),
-(11, 8, 'werqejwiqjrewr', 'rewarfkelrk', '2025-04-30', 0, '2025-04-11 13:45:06'),
-(12, 8, 'ewfaewfEFE', 'sfesFsf', '2025-05-08', 0, '2025-04-11 13:45:21');
+(11, 8, 'werqejwiqjrewr', 'rewarfkelrk', '2025-04-30', 1, '2025-04-11 13:45:06'),
+(12, 8, 'ewfaewfEFE', 'sfesFsf', '2025-05-08', 1, '2025-04-11 13:45:21'),
+(13, 8, 'dsaDSADSADSAD', 'ASDASFEGFVFCKJNEWJ\\EVN JEHSNDVJ NDJVKA NJD\\V JSDBOKVJcmjjvibhwDHJVn ikmdwejkafhbcuwegqdjmwokndcjndksjiqfvewhuqjfcnjewsjaidugbwhnxqinzimzowkefckpriavhjrodjrfahuvbdcnjdcizgharbjeigtufhjiwkoefkgsjibfjbfkogfiekopfijkefghhfgedfrghjk,,jhgtfrfgfh', '2025-11-26', 1, '2025-04-16 11:15:14'),
+(15, 8, 'Arrumar um emprego', 'fefe', '2027-06-16', 1, '2025-04-16 11:16:36'),
+(16, 4, 'Arrumar um emprego', '', '2025-04-24', 1, '2025-04-16 13:48:17');
 
 -- --------------------------------------------------------
 
@@ -138,7 +144,8 @@ CREATE TABLE `quem_sou_eu` (
 --
 
 INSERT INTO `quem_sou_eu` (`id`, `user_id`, `fale_sobre_voce`, `minhas_lembrancas`, `pontos_fortes`, `pontos_fracos`, `meus_valores`, `principais_aptidoes`, `relacoes_familia`, `relacoes_amigos`, `relacoes_escola`, `relacoes_sociedade`, `gosto_fazer`, `nao_gosto_fazer`, `rotina`, `lazer`, `estudos`, `vida_escolar`, `visao_fisica`, `visao_intelectual`, `visao_emocional`, `visao_dos_amigos`, `visao_dos_familiares`, `visao_dos_professores`, `autovalorizacao_total`, `created_at`) VALUES
-(6, 8, 'safcsafcds', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 50, '2025-04-11 10:28:22');
+(6, 8, 'safcsafcds', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 50, '2025-04-11 10:28:22'),
+(7, 4, 'sou lindo', 'poucas', 'legal', 'canseira', '3000000', 'rapido,organizado', 'pouca', 'menos ainda', 'me matando', 'legal', 'ficar no pc', 'acordar cedo', 'enrolada', 'ficar no pc ', 'bastante', 'enrolada', 'gordo', 'cansado', 'de boa', 'sou legal', 'irritante', 'nem sei', 70, '2025-04-16 13:46:58');
 
 -- --------------------------------------------------------
 
@@ -160,6 +167,7 @@ CREATE TABLE `teste_personalidade` (
 --
 
 INSERT INTO `teste_personalidade` (`user_id`, `extrovertido`, `intuitivo`, `racional`, `julgador`, `data_registro`) VALUES
+(4, 88, 67, 73, 80, '2025-04-16 13:48:50'),
 (8, 91, 31, 23, 22, '2025-04-11 12:34:05');
 
 -- --------------------------------------------------------
@@ -183,10 +191,10 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `email`, `description`, `password`, `data_de_registro`, `profile_picture`) VALUES
-(4, 'jonata', 'jonatas@docente.br', 'bbhgvbhnvbghjnj', '$2y$10$w6gZpjjYYSOCqGpgzLgV6efKunSgh2qyuPXJWygKYkENgIbGMq94.', '2025-03-28 14:54:10', 'img/67ed0fc589c6d_7ugE.gif'),
+(4, 'jonata', 'jonatas@docente.br', 'meu Deus, meu senhor me ajuda por favor!', '$2y$10$8Nv0DHAotlQ4VUcZm.VK8evTCkFnZrR/lvjDAgoFJmJE7zveFpxy6', '2025-03-28 14:54:10', 'img/67ed0fc589c6d_7ugE.gif'),
 (5, 'bernini', 'bernini@bernini.com', 'sor bernas senai', '1234', '2025-03-28 18:29:22', 'img/67e6e878e2c5b_OKUa.gif'),
 (6, 'Rafa', 'rafael@gmail.com', '', '1234', '2025-03-28 19:33:54', 'img/67e6ebc794cf4_XGrF.gif'),
-(7, 'roberto', 'robertohenryck365@gmail.com', 'afawdawdaw', 'Ce380@3042R', '2025-04-02 18:42:02', 'img/67ed691da037b_OKUa.gif'),
+(7, 'roberto', 'robertohenryck365@gmail.com', 'afawdawdaw', '$2y$10$RCA01/hwl9Vi.ZjRl/FjQ.k0Rj/4TaN/cHrxdSDHar/Mw6hkpBPvW', '2025-04-02 18:42:02', 'img/67ed691da037b_OKUa.gif'),
 (8, 'Eric', 'ericsouzapalma123@gmail.com', 'gfyghyghg', '$2y$10$alK5Xk0uZvt9Ys/zT5pLm.45soOKN6bfxyT0QXjNII2VJ9vu4c/7G', '2025-04-02 19:20:11', 'img/67f9042907fc5_OKUa.gif'),
 (9, 'marim', 'marim@gmail.com', NULL, '555', '2025-04-04 17:56:25', NULL),
 (10, 'Davi', 'Davi@gmail.com', NULL, '$2y$10$YCKu6bPEhnWbc4Na2rh16.lCoKrkyDDpcfbn6OI3a9NXOXonEvO4m', '2025-04-04 18:10:35', NULL),
@@ -251,19 +259,19 @@ ALTER TABLE `feedback`
 -- AUTO_INCREMENT de tabela `landing_pages`
 --
 ALTER TABLE `landing_pages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de tabela `plano_acao`
 --
 ALTER TABLE `plano_acao`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de tabela `quem_sou_eu`
 --
 ALTER TABLE `quem_sou_eu`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `users`
