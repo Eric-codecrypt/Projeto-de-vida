@@ -41,6 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <header id="navbar">
         <div class="container">
             <a href="index.php" class="logo">Projeto de <span>Vida</span></a>
+
             <nav>
                 <ul class="desktop-nav">
                     <?php if ($logged_in): ?>
@@ -60,41 +61,133 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <?php endif; ?>
                 </ul>
 
-                <button id="mobile-menu-btn" aria-label="Toggle menu">
-                    <span>
-                        <li><a href="#Inicio">Início</a></li>
-                    </span>
-                    <span>
-                        <li><a href="#Sobre">Sobre</a></li>
-                    </span>
-                    <span>
-                        <li><a href="#Educacao">Educação</a></li>
-                    </span>
-                    <span>
-                        <li><a href="#Carreira">Carreira</a></li>
-                    </span>
-                    <span>
-                        <li><a href="#Contato">Contato</a></li>
-                    </span>
-                    <span>
-                        <li><a href="User.php">Perfil</a></li>
-                    </span>
-                </button>
+                <button id="mobile-menu-btn" aria-label="Abrir menu">☰</button>
             </nav>
         </div>
 
         <!-- Mobile Navigation -->
-        <div id="mobile-menu">
+        <div id="mobile-menu" class="hidden">
             <ul>
-                <li><a href="#Inicio">Início</a></li>
-                <li><a href="#Sobre">Sobre</a></li>
-                <li><a href="#Educacao">Educação</a></li>
-                <li><a href="#Carreira">Carreira</a></li>
-                <li><a href="#Contato">Contato</a></li>
-                <li><a href="Perfil.php">Perfil</a></li>
+                <?php if ($logged_in): ?>
+                    <li><a href="index.php?#Inicio">Início</a></li>
+                    <li><a href="index.php?#Sobre">Sobre</a></li>
+                    <li><a href="index.php?#Educacao">Educação</a></li>
+                    <li><a href="index.php?#Carreira">Carreira</a></li>
+                    <li><a href="index.php?#Contato">Contato</a></li>
+                    <li><a href="user.php">Perfil</a></li>
+                <?php else: ?>
+                    <li><a href="index.php?#Inicio">Início</a></li>
+                    <li><a href="index.php?#Sobre">Sobre</a></li>
+                    <li><a href="index.php?#Educacao">Educação</a></li>
+                    <li><a href="index.php?#Carreira">Carreira</a></li>
+                    <li><a href="index.php?#Contato">Contato</a></li>
+                    <li><a href="login.php">Login</a></li>
+                <?php endif; ?>
             </ul>
         </div>
     </header>
+
+    <style>
+        /* Estilo geral */
+        .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        /* Botão do menu mobile */
+        #mobile-menu-btn {
+            display: none;
+            font-size: 28px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #333;
+        }
+
+        /* Menu mobile */
+        #mobile-menu {
+            display: none;
+            background-color: #fff;
+            position: absolute;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+
+        #mobile-menu ul {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+
+            nav ul {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 60px;
+                right: 20px;
+                background-color: #f8f8f8;
+                border: 1px solid #ccc;
+                padding: 10px;
+                border-radius: 8px;
+                width: 150px;
+            }
+
+            nav ul li {
+                float: none;
+                display: block;
+                text-align: left;
+                padding: 10px 0;
+            }
+
+            nav ul.hidden {
+                display: none;
+            }
+
+            nav ul:not(.hidden) {
+                display: flex;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileBtn = document.getElementById("mobile-menu-btn");
+            const mobileMenu = document.getElementById("mobile-menu");
+
+            mobileBtn.addEventListener("click", () => {
+                mobileMenu.classList.toggle("hidden");
+            });
+        });
+    </script>
 
     <!-- Hero Section -->
     <section id="Inicio" class="hero">

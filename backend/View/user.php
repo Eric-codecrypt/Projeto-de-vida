@@ -316,6 +316,11 @@ if (!$user_id) {
 
 // Verifica se o usuário é 'Eric'
 $isEric = strtolower($username) === 'eric';
+
+// Verifica se já existe uma landing page
+$stmt = $pdo->prepare("SELECT id FROM landing_pages WHERE user_id = ?");
+$stmt->execute([$user_id]);
+$landing = $stmt->fetch();
 ?>
 
 
@@ -969,10 +974,16 @@ voltar-ao-ponto
             <?php endwhile; ?>
         </ul>
     <?php else: ?>
+        <?php if($landing): ?>
         <h3>Minha landing page</h3>
         <a href="landing.php">
-            <button>Criar minha landing page</button>
+            <button>Minha landing page</button>
         </a>
+        <?php else: ?>
+            <a href="landing.php">
+            <button>Criar Minha Landing Page</button>
+        </a>
+        <?php endif ?>
         <a href="editar_landing.php">
             <button>Editar Minha Landing Page</button>
         </a>
