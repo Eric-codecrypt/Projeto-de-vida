@@ -199,7 +199,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["profile_picture"])) 
     }
 }
 
-
 if (isset($_POST['teste_personalidade'])) {
     $extrovertido = (int) ($_POST['extrovertido'] ?? 0);
     $intuitivo = (int) ($_POST['intuitivo'] ?? 0);
@@ -244,20 +243,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['adicionar_meta'])) {
     if (!empty($titulo) && !empty($prazo)) {
         $stmt = $pdo->prepare("INSERT INTO plano_acao (user_id, titulo, descricao, prazo) VALUES (?, ?, ?, ?)");
         $stmt->execute([$user_id, $titulo, $descricao, $prazo]);
-        header("Location: user.php"); // atualiza a página
+        header("Location: user.php");
         exit;
     }
 }
 
-$proximasMetas = []; // valor padrão
+$proximasMetas = [];
 
 // Buscar metas pendentes com prazo futuro
 $stmt = $pdo->prepare("SELECT * FROM plano_acao WHERE user_id = ? AND concluida = 0 AND prazo >= CURDATE() ORDER BY prazo ASC");
 $stmt->execute([$user_id]);
 $proximasMetas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$totalMetas = $dadosPlano['total'] ?? 0;
-$metasFeitas = $dadosPlano['feitas'] ?? 0;
+// Busca todas as metas do usuário
+$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM plano_acao WHERE user_id = ?");
+$stmt->execute([$user_id]);
+$totalMetas = $stmt->fetchColumn();
+
+// Busca metas concluídas
+$stmt = $pdo->prepare("SELECT COUNT(*) as concluidas FROM plano_acao WHERE user_id = ? AND concluida = 1");
+$stmt->execute([$user_id]);
+$metasFeitas = $stmt->fetchColumn();
 
 $porcentagemConcluida = $totalMetas > 0 ? round(($metasFeitas / $totalMetas) * 100) : 0;
 
@@ -268,898 +274,847 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['concluir_meta'])) {
     header("Location: user.php");
     exit;
 }
-
-// Busca todas as metas do usuário
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM plano_acao WHERE user_id = ?");
-$stmt->execute([$user_id]);
-$totalMetas = $stmt->fetchColumn();
-
-// Busca metas concluídas
-$stmt = $pdo->prepare("SELECT COUNT(*) as concluidas FROM plano_acao WHERE user_id = ? AND concluida = 1");
-$stmt->execute([$user_id]);
-$concluidas = $stmt->fetchColumn();
-
-// Evita divisão por zero
-$percentualConcluido = ($totalMetas > 0) ? round(($concluidas / $totalMetas) * 100) : 0;
-
-
-// Salvando a landing personalizada
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['salvar_landing'])) {
-    $titulo = $_POST['titulo_principal'];
-    $subtitulo = $_POST['subtitulo'];
-    $sobre = $_POST['sobre'];
-    $educacao = $_POST['educacao'];
-    $carreira = $_POST['carreira'];
-    $contato = $_POST['contato'];
-
-    $stmt = $pdo->prepare("SELECT id FROM landing_pages WHERE user_id = ?");
-    $stmt->execute([$user['id']]);
-    $exists = $stmt->fetch();
-
-    if ($exists) {
-        $stmt = $pdo->prepare("UPDATE landing_pages SET titulo_principal = ?, subtitulo = ?, sobre = ?, educacao = ?, carreira = ?, contato = ? WHERE user_id = ?");
-        $stmt->execute([$titulo, $subtitulo, $sobre, $educacao, $carreira, $contato, $user['id']]);
-    } else {
-        $stmt = $pdo->prepare("INSERT INTO landing_pages (user_id, titulo_principal, subtitulo, sobre, educacao, carreira, contato) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$user['id'], $titulo, $subtitulo, $sobre, $educacao, $carreira, $contato]);
-    }
-
-    echo "<p style='color:green;'>Landing page atualizada com sucesso!</p>";
-}
-
-
-//landings privadas para um usuario 
-if (!$user_id) {
-    echo "Acesso não autorizado.";
-    exit;
-}
-
-// Verifica se o usuário é 'Eric'
-$isEric = strtolower($username) === 'eric';
-
-// Verifica se já existe uma landing page
-$stmt = $pdo->prepare("SELECT id FROM landing_pages WHERE user_id = ?");
-$stmt->execute([$user_id]);
-$landing = $stmt->fetch();
 ?>
 
-
-
-
-
-
-
 <!DOCTYPE html>
-<html lang="pt-br">
-
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projeto de vida - Estudante de programação</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Perfil do Usuário</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="user-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Funções para as abas
+            const tabs = document.querySelectorAll('.perfil-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove a classe active de todas as abas
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Adiciona a classe active na aba clicada
+                    tab.classList.add('active');
+
+                    // Esconde todos os conteúdos
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    // Mostra o conteúdo da aba selecionada
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+
+            // Funções para modais
+            const modalTriggers = document.querySelectorAll('[data-modal]');
+            const modals = document.querySelectorAll('.modal');
+            const closeButtons = document.querySelectorAll('.fechar-modal');
+
+            modalTriggers.forEach(trigger => {
+                trigger.addEventListener('click', () => {
+                    const modalId = trigger.getAttribute('data-modal');
+                    document.getElementById(modalId).classList.add('show');
+                });
+            });
+
+            closeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    button.closest('.modal').classList.remove('show');
+                });
+            });
+
+            // Fechar modal ao clicar fora
+            window.addEventListener('click', (e) => {
+                modals.forEach(modal => {
+                    if (e.target === modal) {
+                        modal.classList.remove('show');
+                    }
+                });
+            });
+        });
+    </script>
 </head>
-
 <body>
-
-    <header id="navbar">
-        <div class="container">
-            <a href="index.php" class="logo">Projeto de <span>Vida</span></a>
-            <nav>
-                <ul class="desktop-nav">
-                    <li><a href="index.php">Início</a></li>
-                    <li><a href="index.php">Sobre</a></li>
-                    <li><a href="index.php">Educação</a></li>
-                    <li><a href="index.php">Carreira</a></li>
-                    <li><a href="index.php">Contato</a></li>
-                    <li><a href="user.php">Perfil</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-    <!--perfil css-->
-    <style>
-        .profile-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 30px;
-            border-radius: 16px;
-            background-color: #f4f6fa;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .profile-pic-container {
-            position: relative;
-            width: 160px;
-            height: 160px;
-            margin-bottom: 20px;
-        }
-
-        .profile-pic-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 4px solid #4a90e2;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .upload-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.6);
-            color: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-            font-size: 14px;
-            text-align: center;
-            cursor: pointer;
-        }
-
-        .profile-pic-container:hover .upload-overlay {
-            opacity: 1;
-        }
-
-        .upload-overlay label {
-            cursor: pointer;
-        }
-
-        #profile_picture {
-            display: none;
-        }
-
-        .upload-btn {
-            margin-top: 10px;
-            background-color: #4a90e2;
-            color: #fff;
-            padding: 8px 14px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .upload-btn:hover {
-            background-color: #357abd;
-        }
-
-        .user-info {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .user-info h2 {
-            margin: 12px 0 6px;
-            font-size: 18px;
-            color: #333;
-        }
-
-        .user-info input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 15px;
-        }
-
-        .btn {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background-color: #3e8e41;
-        }
-
-        .logout-button {
-            margin-top: 20px;
-            background-color: #e74c3c;
-            color: white;
-            padding: 10px 18px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .logout-button:hover {
-            background-color: #c0392b;
-        }
-
-        h3 {
-            margin-top: 40px;
-            font-size: 20px;
-            color: #333;
-            align-self: flex-start;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-            resize: vertical;
-            margin-bottom: 12px;
-        }
-
-        .form-group {
-            background-color: #4a90e2;
-            color: white;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .form-group:hover {
-            background-color: #357abd;
-        }
-
-        @media (max-width: 600px) {
-            .profile-container {
-                padding: 20px;
-            }
-
-            .profile-pic-container {
-                width: 120px;
-                height: 120px;
-            }
-        }
-    </style>
-
-    <section class="profile-container">
-        <div class="profile-pic-container">
-            <img src="<?= htmlspecialchars($profilePicture) ?>" alt="Foto de Perfil">
-
-            <div class="upload-overlay">
-                <label for="profile_picture">Alterar Foto</label>
-            </div>
-
-            <form method="POST" action="user.php" enctype="multipart/form-data" id="uploadForm">
-                <input type="file" id="profile_picture" name="profile_picture" required>
-                <button type="submit" class="upload-btn">Enviar</button>
+<main class="perfil-container animate-fadeIn">
+    <section class="perfil-header">
+        <div class="perfil-foto">
+            <img src="<?php echo $profilePicture; ?>" alt="Foto de perfil">
+            <label for="file-upload" class="editar-foto">
+                <i class="fas fa-camera"></i>
+            </label>
+            <form method="POST" enctype="multipart/form-data" style="display: none;">
+                <input id="file-upload" type="file" name="profile_picture" onchange="this.form.submit()">
             </form>
         </div>
 
-        <!-- Informações do usuário -->
-        <div class="user-info">
-            <?php if ($authType === 'normal'): ?>
-                <?php
-                if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['edit_usuario'])) {
-                    $new_name = trim($_POST['name']);
-                    $new_email = trim($_POST['email']);
+        <div class="perfil-info">
+            <h1 class="perfil-nome"><?php echo $username; ?></h1>
+            <p class="perfil-email"><?php echo $user['email']; ?></p>
 
-                    if (!empty($new_name) && !empty($new_email)) {
-                        $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
-                        if ($stmt->execute([$new_name, $new_email, $user['id']])) {
-                            $username = $new_name;
-                            $user['email'] = $new_email;
-                            echo "<p style='color: green;'>Dados atualizados com sucesso.</p>";
-                        } else {
-                            echo "<p style='color: red;'>Erro ao atualizar dados.</p>";
-                        }
-                    }
-                }
-                ?>
-
-                <form class="user-info" method="POST">
-                    <h2>Nome de Usuário:</h2>
-                    <input type="text" name="name" value="<?= htmlspecialchars($username) ?>">
-
-                    <h2>Email:</h2>
-                    <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>">
-
-                    <button type="submit" name="edit_usuario" class="btn">Salvar Alterações</button>
-                </form>
-
-            <?php elseif ($authType === 'google' && isset($info)): ?>
-                <h2>Nome de Usuário: <?= htmlspecialchars($info['name'] ?? 'name não disponível') ?></h2>
-                <h2>Email: <?= htmlspecialchars($info['email'] ?? 'Email não disponível') ?></h2>
-            <?php else: ?>
-                <h2>Nome de Usuário: Não disponível</h2>
-                <h2>Email: Não disponível</h2>
+            <?php if (!empty($user['description'])): ?>
+                <div class="perfil-bio">
+                    <p><?php echo $user['description']; ?></p>
+                </div>
             <?php endif; ?>
 
-            <a href="logout.php"><button class="logout-button">Sair da conta</button></a>
-        </div>
-
-        <!-- Descrição -->
-        <h3>Descrição:</h3>
-        <form method="POST">
-            <textarea name="description" rows="5"><?= htmlspecialchars($user['description'] ?? '') ?></textarea>
-            <button class="form-group" type="submit">Salvar</button>
-        </form>
-        <style>
-            .form-grid {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .question {
-                width: 100%;
-                max-width: 650px;
-                display: none;
-                animation: fadeIn 0.4s ease-in-out;
-                margin-bottom: 20px;
-                background: #f0f0f0;
-                padding: 15px;
-                border-radius: 8px;
-                box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
-            }
-
-            .question.active {
-                display: block;
-            }
-
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-
-            .resultado {
-                background: #e7f3ff;
-                border: 1px solid #b3d7ff;
-                padding: 15px;
-                border-radius: 8px;
-                margin-top: 20px;
-                display: none;
-            }
-        </style>
-        <br>
-        <br>
-        <hr>
-        <br>
-        <br>
-        <!-- Formulário "Quem Sou Eu?" -->
-        <h3>Formulário "Quem Sou Eu"</h3>
-        <?php if (!empty($perfil)): ?>
-            <br>
-            <button class="btn" id="startForm">Refazer Formulário</button>
-            <br>
-            <button class="btn" id="mostrarResultados">Exibir resultados do formulário</button>
-        <?php else: ?>
-            <br>
-            <button class="btn" id="startForm">Começar Formulário</button>
-        <?php endif; ?>
-
-
-        <form class="form-grid" method="post" id="formularioQuemSouEu">
-
-
-            <?php
-            $perguntas = [
-                'sobre_voce' => 'Fale sobre você:',
-                'lembrancas' => 'Minhas lembranças:',
-                'pontos_fortes' => 'Pontos fortes:',
-                'pontos_fracos' => 'Pontos fracos:',
-                'valores' => 'Meus valores:',
-                'aptidoes' => 'Principais aptidões (separe com vírgulas):',
-                'familia' => 'Relação com a família:',
-                'amigos' => 'Relação com amigos:',
-                'escola' => 'Relação com a escola:',
-                'sociedade' => 'Relação com a sociedade:',
-                'gosto_fazer' => 'O que gosto de fazer:',
-                'nao_gosto' => 'O que não gosto de fazer:',
-                'rotina' => 'Minha rotina:',
-                'lazer' => 'Meu lazer:',
-                'estudos' => 'Meus estudos:',
-                'vida_escolar' => 'Minha vida escolar:',
-                'visao_fisica' => 'Visão física:',
-                'visao_intelectual' => 'Visão intelectual:',
-                'visao_emocional' => 'Visão emocional:',
-                'visao_amigos' => 'O que meus amigos dizem sobre mim:',
-                'visao_familiares' => 'O que meus familiares dizem sobre mim:',
-                'visao_professores' => 'O que meus professores dizem sobre mim:'
-            ];
-            $index = 0;
-            foreach ($perguntas as $campo => $texto) {
-                echo "<div class='question' id='q$index'>";
-                echo "<label for='$campo'>$texto</label>";
-                if ($campo === 'aptidoes') {
-                    echo "<input type='text' name='aptidoes[]' value='" . htmlspecialchars($perfil['principais_aptidoes'] ?? '') . "'>";
-                } else {
-                    echo "<textarea name='$campo'>" . htmlspecialchars($perfil[$campo] ?? '') . "</textarea>";
-                }
-                echo "</div>";
-                $index++;
-            }
-            ?>
-            <div class="question" id="final">
-                <label for="autovalorizacao">Autovalorização total(0-100):</label>
-                <input type="number" name="autovalorizacao" min="0" max="100" value="<?= htmlspecialchars($perfil['autovalorizacao_total'] ?? 0) ?>">
-                <button type="submit" name="salvar_perfil_completo" class="btn">Salvar Perfil</button>
+            <div class="perfil-acoes">
+                <button class="btn btn-primario" data-modal="editar-perfil">
+                    <i class="fas fa-user-edit"></i> Editar Perfil
+                </button>
+                <button class="btn btn-secundario" data-modal="editar-bio">
+                    <i class="fas fa-edit"></i> Editar Bio
+                </button>
             </div>
-        </form>
-
-        <div class="resultado" id="resultadoPerfil">
-            <h3>Resultados do Formulário</h3>
-            <?php
-            if (!empty($perfil)) {
-                foreach ($perfil as $chave => $valor) {
-                    if ($chave === 'id' || $chave === 'user_id') {
-                        if ($chave === 'user_id') {
-                            echo "<p><strong>Nome do Usuário:</strong> " . htmlspecialchars($username) . "</p>";
-                        }
-                        continue;
-                    }
-                    echo "<p><strong>" . ucfirst(str_replace('_', ' ', $chave)) . ":</strong> " . nl2br(htmlspecialchars($valor)) . "</p>";
-                }
-            } else {
-                echo "<p>Nenhum dado disponível.</p>";
-            }
-            ?>
         </div>
     </section>
 
+    <div class="perfil-tabs">
+        <button class="perfil-tab active" data-tab="resumo">Resumo</button>
+        <button class="perfil-tab" data-tab="quem-sou-eu">Quem Sou Eu</button>
+        <button class="perfil-tab" data-tab="personalidade">Personalidade</button>
+        <button class="perfil-tab" data-tab="metas">Minhas Metas</button>
+    </div>
 
-    <br>
-    <br>
-    <br>
-    <br>
-    <hr>
-    <!--css progresso-->
-    <style>
-        .proximas-metas {
-            list-style: none;
-            padding-left: 0;
-            margin-top: 10px;
-        }
+    <div class="tab-content" id="resumo">
+        <section class="perfil-conteudo">
+            <h2 class="secao-titulo">Visão Geral</h2>
 
-voltar-ao-ponto
-        .proximas-metas li {
-            background: #f9f9f9;
-            border-left: 4px solid #4caf50;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-        }
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-titulo">Progresso</h3>
+                        <p class="card-subtitulo">Completou <?php echo $metasFeitas; ?> de <?php echo $totalMetas; ?> metas</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="progresso-container">
+                            <div class="progresso-barra" style="width: <?php echo $porcentagemConcluida; ?>%"></div>
+                        </div>
+                        <p class="text-center"><?php echo $porcentagemConcluida; ?>% completo</p>
+                    </div>
+                </div>
 
-        .prazo {
-            color: #777;
-            font-size: 0.9em;
-        }
-    </style>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-titulo">Próximas Metas</h3>
+                    </div>
+                    <div class="card-body">
+                        <?php if (count($proximasMetas) > 0): ?>
+                            <div class="lista-metas">
+                                <?php foreach(array_slice($proximasMetas, 0, 3) as $meta): ?>
+                                    <div class="meta-item">
+                                        <form method="POST">
+                                            <input type="hidden" name="concluir_meta" value="<?php echo $meta['id']; ?>">
+                                            <input type="checkbox" class="meta-checkbox" onchange="this.form.submit()">
+                                        </form>
+                                        <div class="meta-conteudo">
+                                            <h4 class="meta-titulo"><?php echo $meta['titulo']; ?></h4>
+                                            <p class="meta-descricao"><?php echo $meta['descricao']; ?></p>
+                                            <p class="meta-prazo">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                Prazo: <?php echo date('d/m/Y', strtotime($meta['prazo'])); ?>
+                                            </p>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-center">Você não tem metas pendentes.</p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-primario btn-pequeno" data-modal="adicionar-meta">
+                            <i class="fas fa-plus"></i> Nova Meta
+                        </button>
+                    </div>
+                </div>
 
-    <h3>Progresso das Metas/Tarefas</h3>
-    <canvas id="graficoProgresso" width="300" height="300"></canvas>
-    <h3>Nova Tarefa ou Meta</h3>
-    <form method="POST" action="">
-        <input type="text" name="titulo" placeholder="Título da Meta" required><br>
-        <textarea name="descricao" placeholder="Descrição (opcional)"></textarea><br>
-        <label>Prazo:</label>
-        <input type="date" name="prazo" required><br>
-        <button type="submit" name="adicionar_meta">Adicionar</button>
-    </form>
-    <h3>Próximas Tarefas/Metas</h3>
-    <ul class="proximas-metas">
-        <?php if (!empty($proximasMetas)): ?>
-            <?php foreach ($proximasMetas as $meta): ?>
-                <li style="<?= $meta['concluida'] ? 'text-decoration: line-through; color: gray;' : '' ?>">
-                    <strong><?= htmlspecialchars($meta['titulo']) ?></strong>
-                    <span class="prazo">→ até <?= date('d/m/Y', strtotime($meta['prazo'])) ?></span>
+                <?php if ($personalidade): ?>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-titulo">Personalidade</h3>
+                            <p class="card-subtitulo">Meu traço dominante</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="traco-dominante text-center">
+                                <?php echo $traço_dominante; ?>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a href="#personalidade" class="btn btn-secundario btn-pequeno" onclick="event.preventDefault(); document.querySelector('.perfil-tab[data-tab=\'personalidade\']').click();">
+                                <i class="fas fa-chart-bar"></i> Ver Detalhes
+                            </a>
+                        </div>
 
-                    <?php if (!$meta['concluida']): ?>
-                        <form method="POST" style="display:inline;">
-                            <input type="hidden" name="concluir_meta" value="<?= $meta['id'] ?>">
-                            <button type="submit">Concluir</button>
-                        </form>
-                    <?php else: ?>
-                        <span>✅ Concluída</span>
-                    <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <li>Nenhuma tarefa pendente encontrada.</li>
-        <?php endif; ?>
-    </ul>
-
-    <hr>
-
-    <br>
-    <br>
-    <br>
-    <br>
-    <style>
-        /* Estilo geral do quiz */
-        #quizForm,
-        .quiz-question {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        h3 {
-            text-align: center;
-            color: #333;
-            font-weight: 600;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: #444;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .btn,
-        .proximoQuiz,
-        form button[type="submit"] {
-            background-color: #4a90e2;
-            color: #fff;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn:hover,
-        .proximoQuiz:hover,
-        form button[type="submit"]:hover {
-            background-color: #357abd;
-        }
-
-        canvas {
-            display: block;
-            margin: 40px auto;
-            max-width: 100%;
-        }
-
-        .quiz-question {
-            display: none;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        .quiz-question:first-of-type {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .highlight-result {
-            text-align: center;
-            font-size: 18px;
-            color: #333;
-            margin-top: 30px;
-            background: #e8f0fe;
-            padding: 15px;
-            border-left: 5px solid #4a90e2;
-            border-radius: 10px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-    </style>
-
-    <!-- Quiz teste de personalidade-->
-    <h3>(Quiz) - Teste de personalidade -</h3>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-
-    <button class="btn btn-primary" style="justify-content: center;" id="comecarQuiz">Começar Quiz!</button>
-
-    <form id="quizForm" method="POST" style="display: none;">
-        <input type="hidden" name="teste_personalidade" value="1">
-
-        <div class="quiz-question">
-            <label>Você se considera extrovertido? (0 a 100)</label>
-            <input type="range" name="extrovertido" min="0" max="100">
-            <button type="button" class="proximoQuiz">Próxima</button>
-        </div>
-
-        <div class="quiz-question">
-            <label>Você confia mais na intuição do que nos fatos? (0 a 100)</label>
-            <input type="range" name="intuitivo" min="0" max="100">
-            <button type="button" class="proximoQuiz">Próxima</button>
-        </div>
-
-        <div class="quiz-question">
-            <label>Toma decisões com base na lógica? (0 a 100)</label>
-            <input type="range" name="racional" min="0" max="100">
-            <button type="button" class="proximoQuiz">Próxima</button>
-        </div>
-
-        <div class="quiz-question">
-            <label>Você prefere organização e planejamento? (0 a 100)</label>
-            <input type="range" name="julgador" min="0" max="100">
-            <button type="submit">Salvar Teste</button>
-        </div>
-    </form>
-
-    <?php if ($personalidade): ?>
-        <?php if ($traço_dominante): ?>
-            <div class="highlight-result">
-                <?php if ($traço_dominante === "Racional"): ?>
-                    <strong>Ótimo!</strong> Você é <strong>Racional</strong>: lógico e analítico!
-                <?php elseif ($traço_dominante === "Extrovertido"): ?>
-                    <strong>Ótimo!</strong> Você é <strong>Extrovertido</strong>: comunicativo e sociável!
-                <?php elseif ($traço_dominante === "Intuitivo"): ?>
-                    <strong>Ótimo!</strong> Você é <strong>Intuitivo</strong>: guiado pela sua intuição!
-                <?php elseif ($traço_dominante === "Julgador"): ?>
-                    <strong>Ótimo!</strong> Você é <strong>Julgador</strong>: organizado e planejador!
+                    </div>
                 <?php endif; ?>
             </div>
-        <?php endif; ?>
+        </section>
+    </div>
 
-        <h3>Resultado do Teste de Personalidade</h3>
-        <canvas id="graficoPersonalidade" width="600" height="400"></canvas>
-    <?php endif; ?>
+    <div class="tab-content hidden" id="quem-sou-eu">
+        <section class="perfil-conteudo">
+            <h2 class="secao-titulo">
+                Quem Sou Eu
+                <button class="btn btn-primario btn-pequeno" data-modal="editar-quem-sou">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+            </h2>
 
+            <?php if ($perfil): ?>
+                <div class="perfil-form">
+                    <div class="form-grupo">
+                        <label class="form-label">Sobre Mim</label>
+                        <p><?php echo $perfil['fale_sobre_voce']; ?></p>
+                    </div>
 
+                    <div class="form-grupo">
+                        <label class="form-label">Minhas Lembranças</label>
+                        <p><?php echo $perfil['minhas_lembrancas']; ?></p>
+                    </div>
 
+                    <div class="form-grupo">
+                        <label class="form-label">Pontos Fortes</label>
+                        <p><?php echo $perfil['pontos_fortes']; ?></p>
+                    </div>
 
+                    <div class="form-grupo">
+                        <label class="form-label">Pontos Fracos</label>
+                        <p><?php echo $perfil['pontos_fracos']; ?></p>
+                    </div>
 
+                    <div class="form-grupo">
+                        <label class="form-label">Meus Valores</label>
+                        <p><?php echo $perfil['meus_valores']; ?></p>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="text-center mt-4">
+                    <p>Você ainda não preencheu seu perfil "Quem Sou Eu"</p>
+                    <button class="btn btn-primario mt-3" data-modal="editar-quem-sou">
+                        Preencher Agora
+                    </button>
+                </div>
+            <?php endif; ?>
+        </section>
+    </div>
 
-
-
-
-
-    <hr>
-
-
-
-
-
-
-
-    <!-- Botão para editar a própria landing page -->
-
-
-    <!-- Lista todas as landing pages - somente visível para Eric -->
-    <?php if ($isEric): ?>
-        <h3>Landing Pages Criadas por Todos os Usuários</h3>
-        <ul>
-            <?php
-            $stmt = $pdo->query("SELECT lp.*, u.username FROM landing_pages lp JOIN users u ON lp.user_id = u.id");
-            while ($row = $stmt->fetch()):
-            ?>
-                <li>
-                    <strong><?= htmlspecialchars($row['username']) ?>:</strong>
-                    <a href="landing.php?usuario=<?= urlencode($row['username']) ?>">Ver Landing Page</a>
-                </li>
-            <?php endwhile; ?>
-        </ul>
-    <?php else: ?>
-        <?php if($landing): ?>
-        <h3>Minha landing page</h3>
-        <a href="landing.php">
-            <button>Minha landing page</button>
-        </a>
-        <?php else: ?>
-            <a href="landing.php">
-            <button>Criar Minha Landing Page</button>
-        </a>
-        <?php endif ?>
-        <a href="editar_landing.php">
-            <button>Editar Minha Landing Page</button>
-        </a>
-    <?php endif ?>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <!-- script -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const perguntas = document.querySelectorAll('.question');
-            const botaoIniciar = document.getElementById('startForm');
-            const botaoMostrarResultados = document.getElementById('mostrarResultados');
-            const resultado = document.getElementById('resultadoPerfil');
-
-            let indice = 0;
-
-            function mostrarPergunta(index) {
-                perguntas.forEach((p, i) => {
-                    p.classList.remove('active');
-                    if (i === index) {
-                        p.classList.add('active');
-                    }
-                });
-            }
-
-            function proximo() {
-                if (indice < perguntas.length - 1) {
-                    indice++;
-                    mostrarPergunta(indice);
-                } else {
-                    mostrarPergunta(indice);
-                }
-            }
-
-            if (botaoIniciar) {
-                botaoIniciar.addEventListener('click', () => {
-                    botaoIniciar.style.display = 'none';
-                    mostrarPergunta(indice);
-                });
-            }
-
-            if (botaoMostrarResultados) {
-                botaoMostrarResultados.addEventListener('click', function() {
-                    if (resultado.style.display === "none" || resultado.style.display === "") {
-                        resultado.style.display = "block";
-                        this.textContent = "Ocultar resultados do formulário";
-                        window.scrollTo({
-                            top: resultado.offsetTop,
-                            behavior: 'smooth'
-                        });
-                    } else {
-                        resultado.style.display = "none";
-                        this.textContent = "Exibir resultados do formulário";
-                    }
-                });
-            }
-
-            perguntas.forEach((p) => {
-                if (p.id !== 'final') {
-                    const btnProximo = document.createElement('button');
-                    btnProximo.textContent = 'Próxima';
-                    btnProximo.type = 'button';
-                    btnProximo.className = 'btn';
-                    btnProximo.style.marginTop = '10px';
-                    btnProximo.addEventListener('click', proximo);
-                    p.appendChild(btnProximo);
-                }
-
-                const input = p.querySelector('textarea, input');
-                if (input) {
-                    input.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            proximo();
-                        }
-                    });
-                }
-            });
-        });
-    </script>
-
-    <!--script quiz-->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const quizForm = document.getElementById('quizForm');
-            const comecarQuiz = document.getElementById('comecarQuiz');
-            const perguntasQuiz = quizForm.querySelectorAll('.quiz-question');
-            let indiceQuiz = 0;
-
-            comecarQuiz.addEventListener('click', () => {
-                comecarQuiz.style.display = 'none';
-                quizForm.style.display = 'block';
-                perguntasQuiz[indiceQuiz].style.display = 'block';
-            });
-
-            const botoesProximo = quizForm.querySelectorAll('.proximoQuiz');
-            botoesProximo.forEach((botao, i) => {
-                botao.addEventListener('click', () => {
-                    perguntasQuiz[i].style.display = 'none';
-                    if (i + 1 < perguntasQuiz.length) {
-                        perguntasQuiz[i + 1].style.display = 'block';
-                    }
-                });
-            });
+    <div class="tab-content hidden" id="personalidade">
+        <section class="perfil-conteudo">
+            <h2 class="secao-titulo">
+                Teste de Personalidade
+                <button class="btn btn-primario btn-pequeno" data-modal="teste-personalidade">
+                    <i class="fas fa-edit"></i> Realizar Teste
+                </button>
+            </h2>
 
             <?php if ($personalidade): ?>
-                const ctx = document.getElementById('graficoPersonalidade');
-                new Chart(ctx, {
-                    type: 'radar',
-                    data: {
-                        labels: ['Extrovertido', 'Intuitivo', 'Racional', 'Julgador'],
-                        datasets: [{
-                            label: 'Perfil de Personalidade',
-                            data: [
-                                <?= $personalidade['extrovertido'] ?>,
-                                <?= $personalidade['intuitivo'] ?>,
-                                <?= $personalidade['racional'] ?>,
-                                <?= $personalidade['julgador'] ?>
-                            ],
-                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            r: {
-                                min: 0,
-                                max: 100
-                            }
-                        }
-                    }
-                });
+                <div class="teste-personalidade">
+                    <div class="teste-item">
+                        <div class="teste-titulo">Extroversão</div>
+                        <div class="teste-valor"><?php echo $personalidade['extrovertido']; ?>%</div>
+                        <div class="progresso-container">
+                            <div class="progresso-barra" style="width: <?php echo $personalidade['extrovertido']; ?>%"></div>
+                        </div>
+                    </div>
+
+                    <div class="teste-item">
+                        <div class="teste-titulo">Intuição</div>
+                        <div class="teste-valor"><?php echo $personalidade['intuitivo']; ?>%</div>
+                        <div class="progresso-container">
+                            <div class="progresso-barra" style="width: <?php echo $personalidade['intuitivo']; ?>%"></div>
+                        </div>
+                    </div>
+
+                    <div class="teste-item">
+                        <div class="teste-titulo">Racionalidade</div>
+                        <div class="teste-valor"><?php echo $personalidade['racional']; ?>%</div>
+                        <div class="progresso-container">
+                            <div class="progresso-barra" style="width: <?php echo $personalidade['racional']; ?>%"></div>
+                        </div>
+                    </div>
+
+                    <div class="teste-item">
+                        <div class="teste-titulo">Julgamento</div>
+                        <div class="teste-valor"><?php echo $personalidade['julgador']; ?>%</div>
+                        <div class="progresso-container">
+                            <div class="progresso-barra" style="width: <?php echo $personalidade['julgador']; ?>%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <h3>Seu traço dominante é:</h3>
+                    <div class="traco-dominante mt-2"><?php echo $traço_dominante; ?></div>
+                </div>
+            <?php else: ?>
+                <div class="text-center mt-4">
+                    <p>Você ainda não realizou o teste de personalidade</p>
+                    <button class="btn btn-primario mt-3" data-modal="teste-personalidade">
+                        Realizar Teste Agora
+                    </button>
+                </div>
             <?php endif; ?>
-        });
-    </script>
+        </section>
+    </div>
 
+    <div class="tab-content hidden" id="metas">
+        <section class="perfil-conteudo">
+            <h2 class="secao-titulo">
+                Minhas Metas
+                <button class="btn btn-primario btn-pequeno" data-modal="adicionar-meta">
+                    <i class="fas fa-plus"></i> Nova Meta
+                </button>
+            </h2>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const ctx = document.getElementById('graficoProgresso').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Concluídas', 'Pendentes'],
-                datasets: [{
-                    data: [<?= $concluidas ?>, <?= $totalMetas - $concluidas ?>],
-                    backgroundColor: ['#0064fa', '#64748b'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
+            <div class="progresso-container">
+                <div class="progresso-barra" style="width: <?php echo $porcentagemConcluida; ?>%"></div>
+            </div>
+            <p class="text-center mb-4"><?php echo $porcentagemConcluida; ?>% completo (<?php echo $metasFeitas; ?> de <?php echo $totalMetas; ?>)</p>
+
+            <?php if (count($proximasMetas) > 0): ?>
+                <div class="lista-metas">
+                    <?php foreach($proximasMetas as $meta): ?>
+                        <div class="meta-item">
+                            <form method="POST">
+                                <input type="hidden" name="concluir_meta" value="<?php echo $meta['id']; ?>">
+                                <input type="checkbox" class="meta-checkbox" onchange="this.form.submit()">
+                            </form>
+                            <div class="meta-conteudo">
+                                <h4 class="meta-titulo"><?php echo $meta['titulo']; ?></h4>
+                                <p class="meta-descricao"><?php echo $meta['descricao']; ?></p>
+                                <p class="meta-prazo">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Prazo: <?php echo date('d/m/Y', strtotime($meta['prazo'])); ?>
+                                </p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="text-center mt-4">
+                    <p>Você não tem metas pendentes</p>
+                    <button class="btn btn-primario mt-3" data-modal="adicionar-meta">
+                        Adicionar Meta
+                    </button>
+                </div>
+            <?php endif; ?>
+        </section>
+    </div>
+</main>
+
+<!-- Modais -->
+<div class="modal" id="editar-perfil">
+    <div class="modal-conteudo">
+        <div class="modal-cabecalho">
+            <h3>Editar Perfil</h3>
+            <button class="fechar-modal">&times;</button>
+        </div>
+        <div class="modal-corpo">
+            <form method="POST" class="perfil-form">
+                <div class="form-grupo">
+                    <label class="form-label" for="name">Nome</label>
+                    <input type="text" id="name" name="name" class="form-input" value="<?php echo $username; ?>" required>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-input" value="<?php echo $user['email']; ?>" required>
+                </div>
+
+                <div class="form-acoes">
+                    <button type="button" class="btn btn-secundario fechar-modal">Cancelar</button>
+                    <button type="submit" name="edit_usuario" class="btn btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="editar-bio">
+    <div class="modal-conteudo">
+        <div class="modal-cabecalho">
+            <h3>Editar Bio</h3>
+            <button class="fechar-modal">&times;</button>
+        </div>
+        <div class="modal-corpo">
+            <form method="POST" class="perfil-form">
+                <div class="form-grupo">
+                    <label class="form-label" for="description">Biografia</label>
+                    <textarea id="description" name="description" class="form-input textarea" rows="5"><?php echo $user['description']; ?></textarea>
+                </div>
+
+                <div class="form-acoes">
+                    <button type="button" class="btn btn-secundario fechar-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="adicionar-meta">
+    <div class="modal-conteudo">
+        <div class="modal-cabecalho">
+            <h3>Adicionar Nova Meta</h3>
+            <button class="fechar-modal">&times;</button>
+        </div>
+        <div class="modal-corpo">
+            <form method="POST" class="perfil-form">
+                <div class="form-grupo">
+                    <label class="form-label" for="titulo">Título da Meta</label>
+                    <input type="text" id="titulo" name="titulo" class="form-input" required>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="descricao">Descrição</label>
+                    <textarea id="descricao" name="descricao" class="form-input textarea"></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="prazo">Prazo</label>
+                    <input type="date" id="prazo" name="prazo" class="form-input" required>
+                </div>
+
+                <div class="form-acoes">
+                    <button type="button" class="btn btn-secundario fechar-modal">Cancelar</button>
+                    <button type="submit" name="adicionar_meta" class="btn btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="editar-quem-sou">
+    <div class="modal-conteudo">
+        <div class="modal-cabecalho">
+            <h3>Quem Sou Eu</h3>
+            <button class="fechar-modal">&times;</button>
+        </div>
+        <div class="modal-corpo">
+            <form method="POST" class="perfil-form">
+                <div class="form-grupo">
+                    <label class="form-label" for="sobre_voce">Fale Sobre Você</label>
+                    <textarea id="sobre_voce" name="sobre_voce" class="form-input textarea"><?php echo $perfil['fale_sobre_voce'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="lembrancas">Minhas Lembranças</label>
+                    <textarea id="lembrancas" name="lembrancas" class="form-input textarea"><?php echo $perfil['minhas_lembrancas'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="pontos_fortes">Pontos Fortes</label>
+                    <textarea id="pontos_fortes" name="pontos_fortes" class="form-input textarea"><?php echo $perfil['pontos_fortes'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="pontos_fracos">Pontos Fracos</label>
+                    <textarea id="pontos_fracos" name="pontos_fracos" class="form-input textarea"><?php echo $perfil['pontos_fracos'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="valores">Meus Valores</label>
+                    <textarea id="valores" name="valores" class="form-input textarea"><?php echo $perfil['meus_valores'] ?? ''; ?></textarea>
+                </div>
+
+                <?php
+                $aptidoesArray = [];
+                if (isset($perfil['principais_aptidoes'])) {
+                    $aptidoesArray = explode(', ', $perfil['principais_aptidoes']);
+                }
+
+                $aptidoesPossiveis = [
+                    'comunicação', 'liderança', 'organização', 'criatividade',
+                    'resolução de problemas', 'trabalho em equipe', 'adaptabilidade',
+                    'pensamento crítico', 'empatia', 'gestão de tempo'
+                ];
+                ?>
+
+                <div class="form-grupo">
+                    <label class="form-label">Principais Aptidões</label>
+                    <div class="checkbox-group">
+                        <?php foreach($aptidoesPossiveis as $aptidao): ?>
+                            <div class="checkbox-item">
+                                <input type="checkbox"
+                                       id="apt_<?php echo str_replace(' ', '_', $aptidao); ?>"
+                                       name="aptidoes[]"
+                                       value="<?php echo $aptidao; ?>"
+                                    <?php echo in_array($aptidao, $aptidoesArray) ? 'checked' : ''; ?>>
+                                <label for="apt_<?php echo str_replace(' ', '_', $aptidao); ?>"><?php echo ucfirst($aptidao); ?></label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="familia">Relações com a Família</label>
+                    <textarea id="familia" name="familia" class="form-input textarea"><?php echo $perfil['relacoes_familia'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="amigos">Relações com Amigos</label>
+                    <textarea id="amigos" name="amigos" class="form-input textarea"><?php echo $perfil['relacoes_amigos'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="escola">Relações na Escola</label>
+                    <textarea id="escola" name="escola" class="form-input textarea"><?php echo $perfil['relacoes_escola'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="sociedade">Relações com a Sociedade</label>
+                    <textarea id="sociedade" name="sociedade" class="form-input textarea"><?php echo $perfil['relacoes_sociedade'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="gosto_fazer">O que gosto de fazer</label>
+                    <textarea id="gosto_fazer" name="gosto_fazer" class="form-input textarea"><?php echo $perfil['gosto_fazer'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="nao_gosto">O que não gosto de fazer</label>
+                    <textarea id="nao_gosto" name="nao_gosto" class="form-input textarea"><?php echo $perfil['nao_gosto_fazer'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="rotina">Minha Rotina</label>
+                    <textarea id="rotina" name="rotina" class="form-input textarea"><?php echo $perfil['rotina'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="lazer">Meu Lazer</label>
+                    <textarea id="lazer" name="lazer" class="form-input textarea"><?php echo $perfil['lazer'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="estudos">Meus Estudos</label>
+                    <textarea id="estudos" name="estudos" class="form-input textarea"><?php echo $perfil['estudos'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="vida_escolar">Minha Vida Escolar</label>
+                    <textarea id="vida_escolar" name="vida_escolar" class="form-input textarea"><?php echo $perfil['vida_escolar'] ?? ''; ?></textarea>
+                </div>
+
+                <h3 class="section-subtitle mt-4">Como me vejo</h3>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="visao_fisica">Fisicamente</label>
+                    <textarea id="visao_fisica" name="visao_fisica" class="form-input textarea"><?php echo $perfil['visao_fisica'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="visao_intelectual">Intelectualmente</label>
+                    <textarea id="visao_intelectual" name="visao_intelectual" class="form-input textarea"><?php echo $perfil['visao_intelectual'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="visao_emocional">Emocionalmente</label>
+                    <textarea id="visao_emocional" name="visao_emocional" class="form-input textarea"><?php echo $perfil['visao_emocional'] ?? ''; ?></textarea>
+                </div>
+
+                <h3 class="section-subtitle mt-4">Como os outros me veem</h3>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="visao_amigos">Na visão dos amigos</label>
+                    <textarea id="visao_amigos" name="visao_amigos" class="form-input textarea"><?php echo $perfil['visao_dos_amigos'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="visao_familiares">Na visão dos familiares</label>
+                    <textarea id="visao_familiares" name="visao_familiares" class="form-input textarea"><?php echo $perfil['visao_dos_familiares'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="visao_professores">Na visão dos professores</label>
+                    <textarea id="visao_professores" name="visao_professores" class="form-input textarea"><?php echo $perfil['visao_dos_professores'] ?? ''; ?></textarea>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="autovalorizacao">Auto-Valorização (1-10)</label>
+                    <input type="range" id="autovalorizacao" name="autovalorizacao" min="1" max="10" value="<?php echo $perfil['autovalorizacao_total'] ?? 5; ?>" class="form-range">
+                    <div class="range-value" id="range-value"><?php echo $perfil['autovalorizacao_total'] ?? 5; ?></div>
+                </div>
+
+                <div class="form-acoes">
+                    <button type="button" class="btn btn-secundario fechar-modal">Cancelar</button>
+                    <button type="submit" name="salvar_perfil_completo" class="btn btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="teste-personalidade">
+    <div class="modal-conteudo">
+        <div class="modal-cabecalho">
+            <h3>Teste de Personalidade</h3>
+            <button class="fechar-modal">&times;</button>
+        </div>
+        <div class="modal-corpo">
+            <form method="POST" class="perfil-form">
+                <div class="form-grupo">
+                    <label class="form-label">Extroversão vs. Introversão</label>
+                    <p class="form-info">Defina quanto você se considera extrovertido(a)</p>
+                    <input type="range" name="extrovertido" min="0" max="100" value="<?php echo $personalidade['extrovertido'] ?? 50; ?>" class="form-range">
+                    <div class="range-labels">
+                        <span>Introvertido</span>
+                        <span class="range-value"><?php echo $personalidade['extrovertido'] ?? 50; ?>%</span>
+                        <span>Extrovertido</span>
+                    </div>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label">Intuição vs. Sensação</label>
+                    <p class="form-info">Defina quanto você se baseia na intuição</p>
+                    <input type="range" name="intuitivo" min="0" max="100" value="<?php echo $personalidade['intuitivo'] ?? 50; ?>" class="form-range">
+                    <div class="range-labels">
+                        <span>Sensação</span>
+                        <span class="range-value"><?php echo $personalidade['intuitivo'] ?? 50; ?>%</span>
+                        <span>Intuição</span>
+                    </div>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label">Racionalidade vs. Emocionalidade</label>
+                    <p class="form-info">Defina quanto você toma decisões baseadas na razão</p>
+                    <input type="range" name="racional" min="0" max="100" value="<?php echo $personalidade['racional'] ?? 50; ?>" class="form-range">
+                    <div class="range-labels">
+                        <span>Emocional</span>
+                        <span class="range-value"><?php echo $personalidade['racional'] ?? 50; ?>%</span>
+                        <span>Racional</span>
+                    </div>
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label">Julgamento vs. Percepção</label>
+                    <p class="form-info">Defina quanto você prefere situações estruturadas</p>
+                    <input type="range" name="julgador" min="0" max="100" value="<?php echo $personalidade['julgador'] ?? 50; ?>" class="form-range">
+                    <div class="range-labels">
+                        <span>Percepção</span>
+                        <span class="range-value"><?php echo $personalidade['julgador'] ?? 50; ?>%</span>
+                        <span>Julgamento</span>
+                    </div>
+                </div>
+
+                <div class="form-acoes">
+                    <button type="button" class="btn btn-secundario fechar-modal">Cancelar</button>
+                    <button type="submit" name="teste_personalidade" class="btn btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos adicionais para modais que não estão no CSS externo */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        overflow-y: auto;
+        padding: 2rem 1rem;
+    }
+
+    .modal.show {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .modal-conteudo {
+        background-color: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 800px;
+        margin: 2rem auto;
+        overflow: hidden;
+        animation: modalFadeIn 0.3s ease;
+    }
+
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-cabecalho {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-cabecalho h3 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+
+    .fechar-modal {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--gray-600);
+        transition: color 0.2s ease;
+    }
+
+    .fechar-modal:hover {
+        color: var(--danger);
+    }
+
+    .modal-corpo {
+        padding: 1.5rem;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    /* Estilos para inputs tipo range */
+    .form-range {
+        width: 100%;
+        height: 1rem;
+        padding: 0;
+        background-color: transparent;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    .form-range:focus {
+        outline: none;
+    }
+
+    .form-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary);
+        cursor: pointer;
+        margin-top: -8px;
+    }
+
+    .form-range::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary);
+        cursor: pointer;
+    }
+
+    .form-range::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        cursor: pointer;
+        background: var(--gray-300);
+        border-radius: 999px;
+    }
+
+    .form-range::-moz-range-track {
+        width: 100%;
+        height: 4px;
+        cursor: pointer;
+        background: var(--gray-300);
+        border-radius: 999px;
+    }
+
+    .range-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+
+    .range-value {
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .section-subtitle {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-info {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin-bottom: 0.75rem;
+    }
+
+    .form-acoes {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+</style>
+
+<script>
+    // Script adicional para controlar os inputs de range
+    document.addEventListener('DOMContentLoaded', function() {
+        const rangeInputs = document.querySelectorAll('input[type="range"]');
+
+        rangeInputs.forEach(input => {
+            const valueDisplay = input.nextElementSibling?.querySelector('.range-value');
+
+            if (valueDisplay) {
+                // Atualizar valor ao carregar
+                valueDisplay.textContent = input.value + '%';
+
+                // Atualizar valor ao mover o slider
+                input.addEventListener('input', function() {
+                    valueDisplay.textContent = this.value + '%';
+                });
+            }
+
+            // Para o range da autoavaliação que tem display separado
+            if (input.id === 'autovalorizacao') {
+                const rangeValue = document.getElementById('range-value');
+                if (rangeValue) {
+                    // Atualizar valor ao carregar
+                    rangeValue.textContent = input.value;
+
+                    // Atualizar valor ao mover o slider
+                    input.addEventListener('input', function() {
+                        rangeValue.textContent = this.value;
+                    });
                 }
             }
         });
-    </script>
+    });
+</script>
 </body>
-
 </html>
