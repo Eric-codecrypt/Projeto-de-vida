@@ -273,6 +273,94 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['concluir_meta'])) {
     header("Location: user.php");
     exit;
 }
+
+// Manipular a edição de metas via AJAX
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === 'editar_meta') {
+    $metaId = (int) $_POST['meta_id'];
+    $titulo = trim($_POST['titulo']);
+    $descricao = trim($_POST['descricao']);
+    $prazo = $_POST['prazo'];
+
+    $response = ['success' => false, 'message' => ''];
+
+    // Verificar se a meta pertence ao usuário
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM plano_acao WHERE id = ? AND user_id = ?");
+    $stmt->execute([$metaId, $user_id]);
+
+    if ($stmt->fetchColumn() > 0) {
+        if (!empty($titulo) && !empty($prazo)) {
+            $stmt = $pdo->prepare("UPDATE plano_acao SET titulo = ?, descricao = ?, prazo = ? WHERE id = ? AND user_id = ?");
+            if ($stmt->execute([$titulo, $descricao, $prazo, $metaId, $user_id])) {
+                $response['success'] = true;
+                $response['message'] = 'Meta atualizada com sucesso!';
+            } else {
+                $response['message'] = 'Erro ao atualizar meta no banco de dados.';
+            }
+        } else {
+            $response['message'] = 'Título e prazo são obrigatórios.';
+        }
+    } else {
+        $response['message'] = 'Meta não encontrada ou não pertence ao usuário.';
+    }
+
+    // Responder com JSON
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+}
+
+// Manipular a exclusão de metas via AJAX
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === 'excluir_meta') {
+    $metaId = (int) $_POST['meta_id'];
+
+    $response = ['success' => false, 'message' => ''];
+
+    // Verificar se a meta pertence ao usuário
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM plano_acao WHERE id = ? AND user_id = ?");
+    $stmt->execute([$metaId, $user_id]);
+
+    if ($stmt->fetchColumn() > 0) {
+        $stmt = $pdo->prepare("DELETE FROM plano_acao WHERE id = ? AND user_id = ?");
+        if ($stmt->execute([$metaId, $user_id])) {
+            $response['success'] = true;
+            $response['message'] = 'Meta excluída com sucesso!';
+        } else {
+            $response['message'] = 'Erro ao excluir meta do banco de dados.';
+        }
+    } else {
+        $response['message'] = 'Meta não encontrada ou não pertence ao usuário.';
+    }
+
+    // Responder com JSON
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+}
+
+// Obter dados de uma meta específica para edição
+if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET['get_meta'])) {
+    $metaId = (int) $_GET['get_meta'];
+
+    $response = ['success' => false, 'message' => '', 'meta' => null];
+
+    // Verificar se a meta pertence ao usuário
+    $stmt = $pdo->prepare("SELECT * FROM plano_acao WHERE id = ? AND user_id = ?");
+    $stmt->execute([$metaId, $user_id]);
+    $meta = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($meta) {
+        $response['success'] = true;
+        $response['meta'] = $meta;
+    } else {
+        $response['message'] = 'Meta não encontrada ou não pertence ao usuário.';
+    }
+
+    // Responder com JSON
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -1372,39 +1460,124 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['concluir_meta'])) {
 
         // Funções para editar e excluir metas
         function editarMeta(id) {
-            // Aqui você pode implementar a lógica para editar uma meta
-            // Poderia abrir um modal com os dados da meta para edição
-            alert('Editar meta ' + id + ' (Funcionalidade a ser implementada)');
+            // Primeiro, obter os dados atuais da meta
+            fetch('user.php?get_meta=' + id, {
+                method: 'GET'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Criar um modal dinâmico para edição
+                        const modal = document.createElement('div');
+                        modal.className = 'modal fade';
+                        modal.id = 'editarMetaModal';
+                        modal.setAttribute('tabindex', '-1');
+                        modal.setAttribute('role', 'dialog');
+                        modal.setAttribute('aria-labelledby', 'editarMetaModalLabel');
+                        modal.setAttribute('aria-hidden', 'true');
+
+                        modal.innerHTML = `
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editarMetaModalLabel">Editar Meta</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="formEditarMeta">
+                                <input type="hidden" name="meta_id" value="${id}">
+                                <input type="hidden" name="action" value="editar_meta">
+
+                                <div class="form-group">
+                                    <label for="titulo">Título</label>
+                                    <input type="text" class="form-control" id="titulo" name="titulo" value="${data.meta.titulo}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="descricao">Descrição</label>
+                                    <textarea class="form-control" id="descricao" name="descricao" rows="3">${data.meta.descricao || ''}</textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="prazo">Prazo</label>
+                                    <input type="date" class="form-control" id="prazo" name="prazo" value="${data.meta.prazo}" required>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" onclick="salvarEdicaoMeta()">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                        document.body.appendChild(modal);
+                        $('#editarMetaModal').modal('show');
+
+                        // Remover o modal do DOM quando for fechado
+                        $('#editarMetaModal').on('hidden.bs.modal', function (e) {
+                            document.body.removeChild(modal);
+                        });
+                    } else {
+                        alert('Erro ao buscar dados da meta: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Erro na requisição: ' + error);
+                });
+        }
+
+        function salvarEdicaoMeta() {
+            const form = document.getElementById('formEditarMeta');
+            const formData = new FormData(form);
+
+            fetch('user.php', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        $('#editarMetaModal').modal('hide');
+                        alert('Meta atualizada com sucesso!');
+                        window.location.reload(); // Recarregar para ver as alterações
+                    } else {
+                        alert('Erro ao atualizar: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Erro na requisição: ' + error);
+                });
         }
 
         function excluirMeta(id) {
             if (confirm('Tem certeza que deseja excluir esta meta?')) {
-        // Aqui você pode implementar a requisição para excluir a meta
-        // Por exemplo, usando fetch para enviar uma requisição POST
+                const formData = new FormData();
+                formData.append('action', 'excluir_meta');
+                formData.append('meta_id', id);
 
-        // Exemplo:
-        /*
-        fetch('excluir_meta.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'meta_id=' + id
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Recarregar a página ou atualizar a interface
-                window.location.reload();
-            } else {
-                alert('Erro ao excluir: ' + data.message);
+                fetch('user.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Meta excluída com sucesso!');
+                            window.location.reload(); // Recarregar para ver as alterações
+                        } else {
+                            alert('Erro ao excluir: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Erro na requisição: ' + error);
+                    });
             }
-        });
-        /*
+        }
 
-        alert('Excluir meta ' + id + ' (Funcionalidade a ser implementada)');
-    }
-}
-</script>
+    </script>
 </body>
 </html>

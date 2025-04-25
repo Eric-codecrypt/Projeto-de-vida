@@ -30,166 +30,297 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <head>
     <meta charset="UTF-8">
-    <meta Nome="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projeto de vida - Estudante de programação</title>
+    <!-- Adicione aqui os links para CSS externos e outros recursos -->
+    <style>
+        /* Estilos para o header e navegação */
+        #navbar {
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out;
+            z-index: 1000;
+        }
+
+        #navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #navbar .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            text-decoration: none;
+        }
+
+        #navbar .logo span {
+            color: #007bff;
+        }
+
+        #navbar nav {
+            display: flex;
+            align-items: center;
+        }
+
+        #navbar .desktop-nav {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #navbar .desktop-nav li {
+            margin-left: 25px;
+        }
+
+        #navbar .desktop-nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        #navbar .desktop-nav a:hover {
+            color: #007bff;
+        }
+
+        #navbar .desktop-nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        #navbar .desktop-nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Mobile menu button */
+        #mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #333;
+        }
+
+        /* Mobile menu */
+        #mobile-menu {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        #mobile-menu.hidden {
+            transform: translateY(-100%);
+            visibility: hidden;
+        }
+
+        #mobile-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #mobile-menu li {
+            border-bottom: 1px solid #eee;
+        }
+
+        #mobile-menu a {
+            display: block;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        #mobile-menu a:hover {
+            background-color: #f8f9fa;
+            color: #007bff;
+        }
+
+        /* Estilo para quando o header fica com fundo sólido após scroll */
+        .navbar-scrolled {
+            background-color: white !important;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Media queries para responsividade */
+        @media (max-width: 992px) {
+            #navbar .desktop-nav {
+                display: none;
+            }
+
+            #mobile-menu-btn {
+                display: block;
+            }
+
+            #navbar .container {
+                padding: 10px 5%;
+            }
+        }
+
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 480px) {
+            #navbar .logo {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Espaço para evitar que o conteúdo da página fique atrás do header fixo */
+        body {
+            padding-top: 80px;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Estilos básicos para o restante da página */
+        .content-section {
+            padding: 60px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        section {
+            min-height: 100vh;
+            padding: 80px 20px;
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 {
+            color: #333;
+        }
+    </style>
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <!-- Navigation -->
-    <header id="navbar">
-        <div class="container">
-            <a href="index.php" class="logo">Projeto de <span>Vida</span></a>
+<script>
+    // Código JavaScript para controlar o menu mobile
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
 
-            <nav>
-                <ul class="desktop-nav">
-                    <?php if ($logged_in): ?>
-                        <li><a href="index.php?#Inicio">Início</a></li>
-                        <li><a href="index.php?#Sobre">Sobre</a></li>
-                        <li><a href="index.php?#Educacao">Educação</a></li>
-                        <li><a href="index.php?#Carreira">Carreira</a></li>
-                        <li><a href="index.php?#Contato">Contato</a></li>
-                        <li><a href="user.php">Perfil</a></li>
-                    <?php else: ?>
-                        <li><a href="index.php?#Inicio">Início</a></li>
-                        <li><a href="index.php?#Sobre">Sobre</a></li>
-                        <li><a href="index.php?#Educacao">Educação</a></li>
-                        <li><a href="index.php?#Carreira">Carreira</a></li>
-                        <li><a href="index.php?#Contato">Contato</a></li>
-                        <li><a href="login.php">Login</a></li>
-                    <?php endif; ?>
-                </ul>
+        // Função para alternar o menu mobile
+        mobileMenuBtn.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+            // Alterna o ícone do botão entre hambúrguer e X
+            this.textContent = mobileMenu.classList.contains('hidden') ? '☰' : '✕';
+            this.setAttribute('aria-label',
+                mobileMenu.classList.contains('hidden') ? 'Abrir menu' : 'Fechar menu');
+        });
 
-                <button id="mobile-menu-btn" aria-label="Abrir menu">☰</button>
-            </nav>
-        </div>
+        // Fechar o menu quando um link é clicado
+        const mobileLinks = mobileMenu.getElementsByTagName('a');
+        for (let i = 0; i < mobileLinks.length; i++) {
+            mobileLinks[i].addEventListener('click', function() {
+                mobileMenu.classList.add('hidden');
+                mobileMenuBtn.textContent = '☰';
+                mobileMenuBtn.setAttribute('aria-label', 'Abrir menu');
+            });
+        }
 
-        <!-- Mobile Navigation -->
-        <div id="mobile-menu" class="hidden">
-            <ul>
+        // Adicionar funcionalidade de scroll para o header fixo
+        let prevScrollpos = window.pageYOffset;
+        window.onscroll = function() {
+            const navbar = document.getElementById("navbar");
+            let currentScrollPos = window.pageYOffset;
+
+            // Adiciona classe quando o scroll é maior que 100px
+            if (currentScrollPos > 100) {
+                navbar.classList.add("navbar-scrolled");
+            } else {
+                navbar.classList.remove("navbar-scrolled");
+            }
+
+            // Oculta/mostra navbar baseado na direção do scroll
+            if (prevScrollpos > currentScrollPos) {
+                navbar.style.top = "0";
+            } else {
+                // Não oculta se o menu mobile estiver aberto
+                if (mobileMenu.classList.contains('hidden')) {
+                    navbar.style.top = "-80px";
+                }
+            }
+            prevScrollpos = currentScrollPos;
+        }
+    });
+</script>
+
+<!-- Navigation -->
+<header id="navbar">
+    <div class="container">
+        <a href="index.php" class="logo">Projeto de <span>Vida</span></a>
+
+        <nav>
+            <ul class="desktop-nav">
+                <li><a href="#Inicio">Início</a></li>
+                <li><a href="#Sobre">Sobre</a></li>
+                <li><a href="#Educacao">Educação</a></li>
+                <li><a href="#Carreira">Carreira</a></li>
+                <li><a href="#Contato">Contato</a></li>
                 <?php if ($logged_in): ?>
-                    <li><a href="index.php?#Inicio">Início</a></li>
-                    <li><a href="index.php?#Sobre">Sobre</a></li>
-                    <li><a href="index.php?#Educacao">Educação</a></li>
-                    <li><a href="index.php?#Carreira">Carreira</a></li>
-                    <li><a href="index.php?#Contato">Contato</a></li>
                     <li><a href="user.php">Perfil</a></li>
+                    <li><a href="logout.php">Sair</a></li>
                 <?php else: ?>
-                    <li><a href="index.php?#Inicio">Início</a></li>
-                    <li><a href="index.php?#Sobre">Sobre</a></li>
-                    <li><a href="index.php?#Educacao">Educação</a></li>
-                    <li><a href="index.php?#Carreira">Carreira</a></li>
-                    <li><a href="index.php?#Contato">Contato</a></li>
-                    <li><a href="login.php">Login</a></li>
+                    <li><a href="login.php">Entrar</a></li>
+                    <li><a href="register.php">Cadastrar</a></li>
                 <?php endif; ?>
             </ul>
-        </div>
-    </header>
 
-    <style>
-        /* Estilo geral */
-        .logo {
-            font-size: 1.5em;
-            font-weight: bold;
-            text-decoration: none;
-        }
+            <button id="mobile-menu-btn" aria-label="Abrir menu">☰</button>
+        </nav>
+    </div>
 
-        nav ul {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            gap: 20px;
-        }
+    <!-- Mobile Navigation -->
+    <div id="mobile-menu" class="hidden">
+        <ul>
+            <li><a href="#Inicio">Início</a></li>
+            <li><a href="#Sobre">Sobre</a></li>
+            <li><a href="#Educacao">Educação</a></li>
+            <li><a href="#Carreira">Carreira</a></li>
+            <li><a href="#Contato">Contato</a></li>
+            <?php if ($logged_in): ?>
+                <li><a href="user.php">Perfil</a></li>
+                <li><a href="logout.php">Sair</a></li>
+            <?php else: ?>
+                <li><a href="login.php">Entrar</a></li>
+                <li><a href="register.php">Cadastrar</a></li>
+            <?php endif; ?>
+        </ul>
+    </div>
+</header>
 
-        nav ul li a {
-            text-decoration: none;
-            color: #333;
-        }
+<!-- Espaço para evitar sobreposição do conteúdo pelo header fixo -->
+<div style="height: 60px;"></div>
 
-        /* Botão do menu mobile */
-        #mobile-menu-btn {
-            display: none;
-            font-size: 28px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #333;
-        }
 
-        /* Menu mobile */
-        #mobile-menu {
-            display: none;
-            background-color: #fff;
-            position: absolute;
-            top: 60px;
-            left: 0;
-            width: 100%;
-            padding: 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            z-index: 999;
-        }
-
-        #mobile-menu ul {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .mobile-menu {
-                display: block;
-            }
-
-            nav ul {
-                display: none;
-                flex-direction: column;
-                position: absolute;
-                top: 60px;
-                right: 20px;
-                background-color: #f8f8f8;
-                border: 1px solid #ccc;
-                padding: 10px;
-                border-radius: 8px;
-                width: 150px;
-            }
-
-            nav ul li {
-                float: none;
-                display: block;
-                text-align: left;
-                padding: 10px 0;
-            }
-
-            nav ul.hidden {
-                display: none;
-            }
-
-            nav ul:not(.hidden) {
-                display: flex;
-            }
-        }
-    </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const mobileBtn = document.getElementById("mobile-menu-btn");
-            const mobileMenu = document.getElementById("mobile-menu");
-
-            mobileBtn.addEventListener("click", () => {
-                mobileMenu.classList.toggle("hidden");
-            });
-        });
-    </script>
-
-    <!-- Hero Section -->
+<!-- Hero Section -->
     <section id="Inicio" class="hero">
         <div class="container">
             <div class="tag">SESI/SENAI programador & Futuro Estudante de Ciência da Computação</div>

@@ -274,6 +274,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['concluir_meta'])) {
     header("Location: user.php");
     exit;
 }
+
+// Buscar dados do landing page (se existir)
+$stmt = $pdo->prepare("SELECT * FROM landing_pages WHERE user_id = ?");
+$stmt->execute([$user_id]);
+$landing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Processar formulário de edição de landing page
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
+    $titulo_principal = $_POST['titulo_principal'] ?? '';
+    $subtitulo_principal = $_POST['subtitulo_principal'] ?? '';
+    $sobre = $_POST['sobre'] ?? '';
+    $educacao = $_POST['educacao'] ?? '';
+    $carreira = $_POST['carreira'] ?? '';
+    $contato = $_POST['contato'] ?? '';
+    $publico = isset($_POST['publico']) ? 1 : 0;
+
+    if ($landing) {
+        $query = "UPDATE landing_pages SET titulo_principal=?, subtitulo_principal=?, sobre=?, educacao=?, carreira=?, contato=?, publico=? WHERE user_id=?";
+        $pdo->prepare($query)->execute([$titulo_principal, $subtitulo_principal, $sobre, $educacao, $carreira, $contato, $publico, $user_id]);
+    } else {
+        $query = "INSERT INTO landing_pages (user_id, titulo_principal, subtitulo_principal, sobre, educacao, carreira, contato, publico) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $pdo->prepare($query)->execute([$user_id, $titulo_principal, $subtitulo_principal, $sobre, $educacao, $carreira, $contato, $publico]);
+    }
+
+    // Recarregar os dados após atualização
+    $stmt = $pdo->prepare("SELECT * FROM landing_pages WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $landing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Redirecionar para atualizar a página
+    header("Location: user.php");
+    exit;
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -286,6 +320,261 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['concluir_meta'])) {
     <link rel="stylesheet" href="user-styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+
+    <script>
+        // Código JavaScript para controlar o menu mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            // Função para alternar o menu mobile
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+                // Alterna o ícone do botão entre hambúrguer e X
+                this.textContent = mobileMenu.classList.contains('hidden') ? '☰' : '✕';
+                this.setAttribute('aria-label',
+                    mobileMenu.classList.contains('hidden') ? 'Abrir menu' : 'Fechar menu');
+            });
+
+            // Fechar o menu quando um link é clicado
+            const mobileLinks = mobileMenu.getElementsByTagName('a');
+            for (let i = 0; i < mobileLinks.length; i++) {
+                mobileLinks[i].addEventListener('click', function() {
+                    mobileMenu.classList.add('hidden');
+                    mobileMenuBtn.textContent = '☰';
+                    mobileMenuBtn.setAttribute('aria-label', 'Abrir menu');
+                });
+            }
+
+            // Adicionar funcionalidade de scroll para o header fixo
+            let prevScrollpos = window.pageYOffset;
+            window.onscroll = function() {
+                const navbar = document.getElementById("navbar");
+                let currentScrollPos = window.pageYOffset;
+
+                // Adiciona classe quando o scroll é maior que 100px
+                if (currentScrollPos > 100) {
+                    navbar.classList.add("navbar-scrolled");
+                } else {
+                    navbar.classList.remove("navbar-scrolled");
+                }
+
+                // Oculta/mostra navbar baseado na direção do scroll
+                if (prevScrollpos > currentScrollPos) {
+                    navbar.style.top = "0";
+                } else {
+                    // Não oculta se o menu mobile estiver aberto
+                    if (mobileMenu.classList.contains('hidden')) {
+                        navbar.style.top = "-80px";
+                    }
+                }
+                prevScrollpos = currentScrollPos;
+            }
+        });
+    </script>
+
+    <style>
+        /* Estilos para o header e navegação */
+        #navbar {
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out;
+            z-index: 1000;
+        }
+
+        #navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #navbar .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            text-decoration: none;
+        }
+
+        #navbar .logo span {
+            color: #007bff;
+        }
+
+        #navbar nav {
+            display: flex;
+            align-items: center;
+        }
+
+        #navbar .desktop-nav {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #navbar .desktop-nav li {
+            margin-left: 25px;
+        }
+
+        #navbar .desktop-nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        #navbar .desktop-nav a:hover {
+            color: #007bff;
+        }
+
+        #navbar .desktop-nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        #navbar .desktop-nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Mobile menu button */
+        #mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #333;
+        }
+
+        /* Mobile menu */
+        #mobile-menu {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        #mobile-menu.hidden {
+            transform: translateY(-100%);
+            visibility: hidden;
+        }
+
+        #mobile-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #mobile-menu li {
+            border-bottom: 1px solid #eee;
+        }
+
+        #mobile-menu a {
+            display: block;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        #mobile-menu a:hover {
+            background-color: #f8f9fa;
+            color: #007bff;
+        }
+
+        /* Estilo para quando o header fica com fundo sólido após scroll */
+        .navbar-scrolled {
+            background-color: white !important;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Media queries para responsividade */
+        @media (max-width: 992px) {
+            #navbar .desktop-nav {
+                display: none;
+            }
+
+            #mobile-menu-btn {
+                display: block;
+            }
+
+            #navbar .container {
+                padding: 10px 5%;
+            }
+        }
+
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 480px) {
+            #navbar .logo {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Espaço para evitar que o conteúdo da página fique atrás do header fixo */
+        body {
+            padding-top: 80px;
+        }
+    </style>
+
+    <!-- Navigation -->
+    <header id="navbar">
+        <div class="container">
+            <a href="index.php" class="logo">Projeto de <span>Vida</span></a>
+
+            <nav>
+                <ul class="desktop-nav">
+                    <li><a href="index.php?#Inicio">Início</a></li>
+                    <li><a href="index.php?#Sobre">Sobre</a></li>
+                    <li><a href="index.php?#Educacao">Educação</a></li>
+                    <li><a href="index.php?#Carreira">Carreira</a></li>
+                    <li><a href="index.php?#Contato">Contato</a></li>
+                    <li><a href="user.php">Perfil</a></li>
+                </ul>
+
+                <button id="mobile-menu-btn" aria-label="Abrir menu">☰</button>
+            </nav>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div id="mobile-menu" class="hidden">
+            <ul>
+                <li><a href="index.php?#Inicio">Início</a></li>
+                <li><a href="index.php?#Sobre">Sobre</a></li>
+                <li><a href="index.php?#Educacao">Educação</a></li>
+                <li><a href="index.php?#Carreira">Carreira</a></li>
+                <li><a href="index.php?#Contato">Contato</a></li>
+                <li><a href="user.php">Perfil</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Adicione um espaço depois do header -->
+    <div style="height: 80px;"></div>
+
+
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Funções para as abas
@@ -375,7 +664,328 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['concluir_meta'])) {
         <button class="perfil-tab" data-tab="quem-sou-eu">Quem Sou Eu</button>
         <button class="perfil-tab" data-tab="personalidade">Personalidade</button>
         <button class="perfil-tab" data-tab="metas">Minhas Metas</button>
+        <button class="perfil-tab" data-tab="landing_pages">Landing page</button>
     </div>
+
+    <div class="tab-content" id="landing_pages">
+        <div class="tab-pane">
+            <ul class="nav nav-tabs" id="landing-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" onclick="mostrarAba('landing_preview')">Meu Landing Page</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="mostrarAba('landing_edit')">Editar Landing Page</a>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-3">
+                <!-- Conteúdo da visualização do landing page -->
+                <div id="landing_preview" class="aba-conteudo">
+                    <h2>Meu Landing Page</h2>
+
+                    <?php if ($landing): ?>
+                        <div class="landing-preview">
+                            <div class="topo">
+                                <h1><?= htmlspecialchars($landing['titulo_principal'] ?? 'Meu Currículo') ?></h1>
+                                <p class="subtitulo"><?= htmlspecialchars($landing['subtitulo_principal'] ?? '') ?></p>
+                            </div>
+
+                            <div class="section"><h3>Sobre Mim</h3><p><?= nl2br(htmlspecialchars($landing['sobre'] ?? '')) ?></p></div>
+                            <div class="section"><h3>Educação</h3><p><?= nl2br(htmlspecialchars($landing['educacao'] ?? '')) ?></p></div>
+                            <div class="section"><h3>Carreira</h3><p><?= nl2br(htmlspecialchars($landing['carreira'] ?? '')) ?></p></div>
+                            <div class="section"><h3>Contato</h3><div class="contato"><?= nl2br(htmlspecialchars($landing['contato'] ?? '')) ?></div></div>
+
+                            <a href="landing.php?user_id=<?= $user_id ?>" target="_blank" class="btn btn-primary">Ver Página Completa</a>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-info">
+                            <p>Você ainda não criou seu landing page. <a href="#" onclick="mostrarAba('landing_edit')">Clique aqui para criar</a>.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Formulário de edição do landing page -->
+                <div id="landing_edit" class="aba-conteudo" style="display:none;">
+                    <h2>Editar Meu Landing Page</h2>
+                    <form method="POST" action="user.php" class="form-landing">
+
+                    <div class="form-group">
+                            <label for="titulo_principal">Título Principal</label>
+                            <input type="text" id="titulo_principal" name="titulo_principal" class="form-control" value="<?= htmlspecialchars($landing['titulo_principal'] ?? '') ?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subtitulo_principal">Subtítulo</label>
+                            <textarea id="subtitulo_principal" name="subtitulo_principal" class="form-control" rows="2"><?= htmlspecialchars($landing['subtitulo_principal'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sobre">Sobre Mim</label>
+                            <textarea id="sobre" name="sobre" class="form-control" rows="4"><?= htmlspecialchars($landing['sobre'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="educacao">Educação</label>
+                            <textarea id="educacao" name="educacao" class="form-control" rows="4"><?= htmlspecialchars($landing['educacao'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="carreira">Carreira</label>
+                            <textarea id="carreira" name="carreira" class="form-control" rows="4"><?= htmlspecialchars($landing['carreira'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contato">Contato</label>
+                            <textarea id="contato" name="contato" class="form-control" rows="4"><?= htmlspecialchars($landing['contato'] ?? '') ?></textarea>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" id="publico" name="publico" class="form-check-input" <?= isset($landing['publico']) && $landing['publico'] ? 'checked' : '' ?>>
+                            <label for="publico" class="form-check-label">Tornar público</label>
+                        </div>
+
+                        <button type="submit" name="editar_landing" class="btn btn-primary">Salvar Landing Page</button>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        /* Estilo das abas do landing page */
+        .landing-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .landing-tab {
+            background: none;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            position: relative;
+            color: #555;
+            transition: color 0.3s;
+        }
+
+        .landing-tab:hover {
+            color: #007bff;
+        }
+
+        .landing-tab.active {
+            color: #007bff;
+            font-weight: 600;
+        }
+
+        .landing-tab.active:after {
+            content: '';
+            position: absolute;
+            height: 3px;
+            background-color: #007bff;
+            width: 100%;
+            bottom: -1px;
+            left: 0;
+        }
+
+        /* Conteúdo das abas */
+        .landing-pane {
+            display: none;
+        }
+
+        .landing-pane.active {
+            display: block;
+        }
+
+        .section-title {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Landing Preview */
+        .landing-preview {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .landing-preview .topo {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .landing-preview h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .landing-preview .subtitulo {
+            font-size: 18px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .landing-preview .section {
+            margin-bottom: 25px;
+        }
+
+        .landing-preview .section h3 {
+            font-size: 20px;
+            color: #007bff;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .landing-preview .contato {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+
+        .missing-landing {
+            background-color: #f8f9fa;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            color: #555;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .missing-landing a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .missing-landing a:hover {
+            text-decoration: underline;
+        }
+
+        /* Formulário */
+        .form-landing {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        textarea.input-field {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .checkbox-container label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .form-buttons {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0069d9;
+        }
+    </style>
+
+    <script>
+        function mostrarAbaLanding(abaId) {
+            // Desativa todas as abas
+            document.querySelectorAll('.landing-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+
+            // Remove a classe ativa de todos os botões
+            document.querySelectorAll('.landing-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Ativa a aba solicitada
+            document.getElementById(abaId).classList.add('active');
+
+            // Ativa o botão correspondente
+            const botaoAtivo = document.querySelector(`.landing-tab[data-tab="${abaId}"]`);
+            if (botaoAtivo) {
+                botaoAtivo.classList.add('active');
+            }
+        }
+
+        // Inicialização - verificar se há um landing já salvo
+        document.addEventListener('DOMContentLoaded', function() {
+            <?php if ($landing): ?>
+            // Se já tem landing, mostra a visualização
+            mostrarAbaLanding('landing_preview');
+            <?php else: ?>
+            // Se não tem landing, mostra o editor
+            mostrarAbaLanding('landing_edit');
+            <?php endif; ?>
+        });
+    </script>
+
 
     <div class="tab-content" id="resumo">
         <section class="perfil-conteudo">
@@ -454,110 +1064,748 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['concluir_meta'])) {
     </div>
 
     <div class="tab-content hidden" id="quem-sou-eu">
-        <section class="perfil-conteudo">
-            <h2 class="secao-titulo">
-                Quem Sou Eu
-                <button class="btn btn-primario btn-pequeno" data-modal="editar-quem-sou">
-                    <i class="fas fa-edit"></i> Editar
-                </button>
-            </h2>
+        <h2 class="section-title">Quem Sou Eu</h2>
 
-            <?php if ($perfil): ?>
-                <div class="perfil-form">
-                    <div class="form-grupo">
-                        <label class="form-label">Sobre Mim</label>
-                        <p><?php echo $perfil['fale_sobre_voce']; ?></p>
-                    </div>
+        <?php if (!$perfil): ?>
+            <!-- Mensagem caso não existam dados -->
+            <div class="missing-data">
+                <p>Você ainda não preencheu seu perfil completo. Preencha o formulário abaixo para começar.</p>
+            </div>
+        <?php endif; ?>
 
-                    <div class="form-grupo">
-                        <label class="form-label">Minhas Lembranças</label>
-                        <p><?php echo $perfil['minhas_lembrancas']; ?></p>
-                    </div>
+        <form method="POST" action="user.php" class="form-quem-sou-eu">
+            <!-- Seção 1: Autoconhecimento -->
+            <div class="section">
+                <h3>Autoconhecimento</h3>
 
-                    <div class="form-grupo">
-                        <label class="form-label">Pontos Fortes</label>
-                        <p><?php echo $perfil['pontos_fortes']; ?></p>
-                    </div>
+                <div class="form-group">
+                    <label for="sobre_voce">Fale sobre você</label>
+                    <textarea id="sobre_voce" name="sobre_voce" class="input-field" rows="4"><?= htmlspecialchars($perfil['fale_sobre_voce'] ?? '') ?></textarea>
+                </div>
 
-                    <div class="form-grupo">
-                        <label class="form-label">Pontos Fracos</label>
-                        <p><?php echo $perfil['pontos_fracos']; ?></p>
-                    </div>
+                <div class="form-group">
+                    <label for="lembrancas">Minhas lembranças</label>
+                    <textarea id="lembrancas" name="lembrancas" class="input-field" rows="4"><?= htmlspecialchars($perfil['minhas_lembrancas'] ?? '') ?></textarea>
+                </div>
 
-                    <div class="form-grupo">
-                        <label class="form-label">Meus Valores</label>
-                        <p><?php echo $perfil['meus_valores']; ?></p>
+                <div class="form-group">
+                    <label for="pontos_fortes">Meus pontos fortes</label>
+                    <textarea id="pontos_fortes" name="pontos_fortes" class="input-field" rows="4"><?= htmlspecialchars($perfil['pontos_fortes'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="pontos_fracos">Meus pontos fracos</label>
+                    <textarea id="pontos_fracos" name="pontos_fracos" class="input-field" rows="4"><?= htmlspecialchars($perfil['pontos_fracos'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="valores">Meus valores</label>
+                    <textarea id="valores" name="valores" class="input-field" rows="4"><?= htmlspecialchars($perfil['meus_valores'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Minhas principais aptidões</label>
+                    <?php
+                    // Transformar string em array
+                    $aptidoesArray = explode(', ', $perfil['principais_aptidoes'] ?? '');
+                    ?>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="apt_comunicacao" name="aptidoes[]" value="Comunicação" <?= in_array('Comunicação', $aptidoesArray) ? 'checked' : '' ?>>
+                            <label for="apt_comunicacao">Comunicação</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="apt_criatividade" name="aptidoes[]" value="Criatividade" <?= in_array('Criatividade', $aptidoesArray) ? 'checked' : '' ?>>
+                            <label for="apt_criatividade">Criatividade</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="apt_lideranca" name="aptidoes[]" value="Liderança" <?= in_array('Liderança', $aptidoesArray) ? 'checked' : '' ?>>
+                            <label for="apt_lideranca">Liderança</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="apt_organizacao" name="aptidoes[]" value="Organização" <?= in_array('Organização', $aptidoesArray) ? 'checked' : '' ?>>
+                            <label for="apt_organizacao">Organização</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="apt_empatia" name="aptidoes[]" value="Empatia" <?= in_array('Empatia', $aptidoesArray) ? 'checked' : '' ?>>
+                            <label for="apt_empatia">Empatia</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="apt_analise" name="aptidoes[]" value="Análise" <?= in_array('Análise', $aptidoesArray) ? 'checked' : '' ?>>
+                            <label for="apt_analise">Análise</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="apt_resiliencia" name="aptidoes[]" value="Resiliência" <?= in_array('Resiliência', $aptidoesArray) ? 'checked' : '' ?>>
+                            <label for="apt_resiliencia">Resiliência</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="apt_adaptacao" name="aptidoes[]" value="Adaptação" <?= in_array('Adaptação', $aptidoesArray) ? 'checked' : '' ?>>
+                            <label for="apt_adaptacao">Adaptação</label>
+                        </div>
                     </div>
                 </div>
-            <?php else: ?>
-                <div class="text-center mt-4">
-                    <p>Você ainda não preencheu seu perfil "Quem Sou Eu"</p>
-                    <button class="btn btn-primario mt-3" data-modal="editar-quem-sou">
-                        Preencher Agora
-                    </button>
+            </div>
+
+            <!-- Seção 2: Relações -->
+            <div class="section">
+                <h3>Minhas Relações</h3>
+
+                <div class="form-group">
+                    <label for="familia">Com a família</label>
+                    <textarea id="familia" name="familia" class="input-field" rows="4"><?= htmlspecialchars($perfil['relacoes_familia'] ?? '') ?></textarea>
                 </div>
-            <?php endif; ?>
-        </section>
+
+                <div class="form-group">
+                    <label for="amigos">Com os amigos</label>
+                    <textarea id="amigos" name="amigos" class="input-field" rows="4"><?= htmlspecialchars($perfil['relacoes_amigos'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="escola">Com a escola</label>
+                    <textarea id="escola" name="escola" class="input-field" rows="4"><?= htmlspecialchars($perfil['relacoes_escola'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="sociedade">Com a sociedade</label>
+                    <textarea id="sociedade" name="sociedade" class="input-field" rows="4"><?= htmlspecialchars($perfil['relacoes_sociedade'] ?? '') ?></textarea>
+                </div>
+            </div>
+
+            <!-- Seção 3: Cotidiano -->
+            <div class="section">
+                <h3>Meu Cotidiano</h3>
+
+                <div class="form-group">
+                    <label for="gosto_fazer">O que gosto de fazer</label>
+                    <textarea id="gosto_fazer" name="gosto_fazer" class="input-field" rows="4"><?= htmlspecialchars($perfil['gosto_fazer'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="nao_gosto">O que não gosto de fazer</label>
+                    <textarea id="nao_gosto" name="nao_gosto" class="input-field" rows="4"><?= htmlspecialchars($perfil['nao_gosto_fazer'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="rotina">Minha rotina</label>
+                    <textarea id="rotina" name="rotina" class="input-field" rows="4"><?= htmlspecialchars($perfil['rotina'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="lazer">Meu lazer</label>
+                    <textarea id="lazer" name="lazer" class="input-field" rows="4"><?= htmlspecialchars($perfil['lazer'] ?? '') ?></textarea>
+                </div>
+            </div>
+
+            <!-- Seção 4: Vida Escolar -->
+            <div class="section">
+                <h3>Vida Escolar</h3>
+
+                <div class="form-group">
+                    <label for="estudos">Meus estudos</label>
+                    <textarea id="estudos" name="estudos" class="input-field" rows="4"><?= htmlspecialchars($perfil['estudos'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="vida_escolar">Minha vida escolar</label>
+                    <textarea id="vida_escolar" name="vida_escolar" class="input-field" rows="4"><?= htmlspecialchars($perfil['vida_escolar'] ?? '') ?></textarea>
+                </div>
+            </div>
+
+            <!-- Seção 5: Como Me Vejo -->
+            <div class="section">
+                <h3>Como Me Vejo</h3>
+
+                <div class="form-group">
+                    <label for="visao_fisica">Fisicamente</label>
+                    <textarea id="visao_fisica" name="visao_fisica" class="input-field" rows="4"><?= htmlspecialchars($perfil['visao_fisica'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="visao_intelectual">Intelectualmente</label>
+                    <textarea id="visao_intelectual" name="visao_intelectual" class="input-field" rows="4"><?= htmlspecialchars($perfil['visao_intelectual'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="visao_emocional">Emocionalmente</label>
+                    <textarea id="visao_emocional" name="visao_emocional" class="input-field" rows="4"><?= htmlspecialchars($perfil['visao_emocional'] ?? '') ?></textarea>
+                </div>
+            </div>
+
+            <!-- Seção 6: Como Os Outros Me Veem -->
+            <div class="section">
+                <h3>Como Os Outros Me Veem</h3>
+
+                <div class="form-group">
+                    <label for="visao_amigos">Na visão dos amigos</label>
+                    <textarea id="visao_amigos" name="visao_amigos" class="input-field" rows="4"><?= htmlspecialchars($perfil['visao_dos_amigos'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="visao_familiares">Na visão dos familiares</label>
+                    <textarea id="visao_familiares" name="visao_familiares" class="input-field" rows="4"><?= htmlspecialchars($perfil['visao_dos_familiares'] ?? '') ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="visao_professores">Na visão dos professores</label>
+                    <textarea id="visao_professores" name="visao_professores" class="input-field" rows="4"><?= htmlspecialchars($perfil['visao_dos_professores'] ?? '') ?></textarea>
+                </div>
+            </div>
+
+            <!-- Seção 7: Autovalorização -->
+            <div class="section">
+                <h3>Autovalorização</h3>
+
+                <div class="form-group">
+                    <label for="autovalorizacao">Em uma escala de 1 a 10, quanto você se valoriza?</label>
+                    <input type="range" id="autovalorizacao" name="autovalorizacao" min="0" max="10" class="range-slider" value="<?= (int)($perfil['autovalorizacao_total'] ?? 5) ?>">
+                    <div class="range-value" id="autovalorizacao-value"><?= (int)($perfil['autovalorizacao_total'] ?? 5) ?></div>
+                </div>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit" name="salvar_perfil_completo" class="btn btn-primary">Salvar Perfil</button>
+            </div>
+        </form>
     </div>
+
+    <style>
+        /* Estilo geral da seção "Quem Sou Eu" */
+        #quem-sou-eu {
+            padding: 20px;
+        }
+
+        #quem-sou-eu .section {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        #quem-sou-eu .section h3 {
+            color: #007bff;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Estilo para o formulário */
+        .form-quem-sou-eu .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-quem-sou-eu label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-quem-sou-eu .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-quem-sou-eu .input-field:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        /* Estilo para o grid de checkboxes */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Estilo para o slider */
+        .range-slider {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .range-value {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 24px;
+            color: #007bff;
+        }
+
+        /* Mensagem de dados faltantes */
+        .missing-data {
+            background-color: #f8f9fa;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            color: #555;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        /* Botões do formulário */
+        .form-buttons {
+            margin-top: 30px;
+            text-align: center;
+        }
+    </style>
+
+    <script>
+        // Script para mostrar valor do slider
+        document.addEventListener('DOMContentLoaded', function() {
+            const slider = document.getElementById('autovalorizacao');
+            const output = document.getElementById('autovalorizacao-value');
+
+            if (slider && output) {
+                // Atualizar o valor ao carregar a página
+                output.textContent = slider.value;
+
+                // Atualizar o valor quando o slider é movido
+                slider.oninput = function() {
+                    output.textContent = this.value;
+                };
+            }
+        });
+    </script>
+
 
     <div class="tab-content hidden" id="personalidade">
-        <section class="perfil-conteudo">
-            <h2 class="secao-titulo">
-                Teste de Personalidade
-                <button class="btn btn-primario btn-pequeno" data-modal="teste-personalidade">
-                    <i class="fas fa-edit"></i> Realizar Teste
-                </button>
-            </h2>
+        <h2 class="section-title">Minha Personalidade</h2>
 
-            <?php if ($personalidade): ?>
-                <div class="teste-personalidade">
-                    <div class="teste-item">
-                        <div class="teste-titulo">Extroversão</div>
-                        <div class="teste-valor"><?php echo $personalidade['extrovertido']; ?>%</div>
-                        <div class="progresso-container">
-                            <div class="progresso-barra" style="width: <?php echo $personalidade['extrovertido']; ?>%"></div>
-                        </div>
-                    </div>
+        <div class="personality-sections">
+            <!-- Seção do gráfico de pizza -->
+            <div class="personality-section">
+                <h3>Distribuição de Traços</h3>
 
-                    <div class="teste-item">
-                        <div class="teste-titulo">Intuição</div>
-                        <div class="teste-valor"><?php echo $personalidade['intuitivo']; ?>%</div>
-                        <div class="progresso-container">
-                            <div class="progresso-barra" style="width: <?php echo $personalidade['intuitivo']; ?>%"></div>
-                        </div>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="personalityChart"></canvas>
 
-                    <div class="teste-item">
-                        <div class="teste-titulo">Racionalidade</div>
-                        <div class="teste-valor"><?php echo $personalidade['racional']; ?>%</div>
-                        <div class="progresso-container">
-                            <div class="progresso-barra" style="width: <?php echo $personalidade['racional']; ?>%"></div>
+                    <?php if ($personalidade): ?>
+                        <div class="dominant-trait">
+                            <span>Traço dominante:</span>
+                            <strong><?= htmlspecialchars($traço_dominante) ?></strong>
                         </div>
-                    </div>
-
-                    <div class="teste-item">
-                        <div class="teste-titulo">Julgamento</div>
-                        <div class="teste-valor"><?php echo $personalidade['julgador']; ?>%</div>
-                        <div class="progresso-container">
-                            <div class="progresso-barra" style="width: <?php echo $personalidade['julgador']; ?>%"></div>
-                        </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
+            </div>
 
-                <div class="mt-4 text-center">
-                    <h3>Seu traço dominante é:</h3>
-                    <div class="traco-dominante mt-2"><?php echo $traço_dominante; ?></div>
-                </div>
-            <?php else: ?>
-                <div class="text-center mt-4">
-                    <p>Você ainda não realizou o teste de personalidade</p>
-                    <button class="btn btn-primario mt-3" data-modal="teste-personalidade">
-                        Realizar Teste Agora
-                    </button>
-                </div>
-            <?php endif; ?>
-        </section>
+            <!-- Seção do formulário de avaliação -->
+            <div class="personality-section">
+                <h3>Teste de Personalidade</h3>
+                <p class="section-description">Avalie cada dimensão da sua personalidade numa escala de 0 a 10:</p>
+
+                <form method="POST" action="user.php" class="personality-form">
+                    <div class="slider-group">
+                        <div class="slider-labels">
+                            <span>Introvertido</span>
+                            <span>Extrovertido</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="extrovertido" name="extrovertido" min="0" max="10" value="<?= (int) ($personalidade['extrovertido'] ?? 5) ?>">
+                            <div class="slider-value" id="extrovertido-value"><?= (int) ($personalidade['extrovertido'] ?? 5) ?></div>
+                        </div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-labels">
+                            <span>Sensorial</span>
+                            <span>Intuitivo</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="intuitivo" name="intuitivo" min="0" max="10" value="<?= (int) ($personalidade['intuitivo'] ?? 5) ?>">
+                            <div class="slider-value" id="intuitivo-value"><?= (int) ($personalidade['intuitivo'] ?? 5) ?></div>
+                        </div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-labels">
+                            <span>Emocional</span>
+                            <span>Racional</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="racional" name="racional" min="0" max="10" value="<?= (int) ($personalidade['racional'] ?? 5) ?>">
+                            <div class="slider-value" id="racional-value"><?= (int) ($personalidade['racional'] ?? 5) ?></div>
+                        </div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-labels">
+                            <span>Perceptivo</span>
+                            <span>Julgador</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="julgador" name="julgador" min="0" max="10" value="<?= (int) ($personalidade['julgador'] ?? 5) ?>">
+                            <div class="slider-value" id="julgador-value"><?= (int) ($personalidade['julgador'] ?? 5) ?></div>
+                        </div>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="submit" name="teste_personalidade" class="btn btn-primary">Salvar Resultados</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Seção de interpretação dos resultados -->
+            <div class="personality-section results-section">
+                <h3>Interpretação dos Resultados</h3>
+
+                <?php if ($personalidade): ?>
+                    <div class="personality-traits">
+                        <div class="trait">
+                            <h4>Introversão vs. Extroversão <span>(<?= (int) ($personalidade['extrovertido']) ?>/10)</span></h4>
+                            <div class="trait-bar">
+                                <div class="trait-fill" style="width: <?= (int) ($personalidade['extrovertido'] * 10) ?>%"></div>
+                            </div>
+                            <p class="trait-description">
+                                <?php if ($personalidade['extrovertido'] > 5): ?>
+                                    Você tende a ser mais <strong>extrovertido</strong>, preferindo interação social e ambientes estimulantes.
+                                <?php else: ?>
+                                    Você tende a ser mais <strong>introvertido</strong>, preferindo reflexão e ambientes mais calmos.
+                                <?php endif; ?>
+                            </p>
+                        </div>
+
+                        <div class="trait">
+                            <h4>Sensorial vs. Intuitivo <span>(<?= (int) ($personalidade['intuitivo']) ?>/10)</span></h4>
+                            <div class="trait-bar">
+                                <div class="trait-fill" style="width: <?= (int) ($personalidade['intuitivo'] * 10) ?>%"></div>
+                            </div>
+                            <p class="trait-description">
+                                <?php if ($personalidade['intuitivo'] > 5): ?>
+                                    Você tende a ser mais <strong>intuitivo</strong>, focando em possibilidades futuras e significados abstratos.
+                                <?php else: ?>
+                                    Você tende a ser mais <strong>sensorial</strong>, focando em experiências concretas e detalhes práticos.
+                                <?php endif; ?>
+                            </p>
+                        </div>
+
+                        <div class="trait">
+                            <h4>Emocional vs. Racional <span>(<?= (int) ($personalidade['racional']) ?>/10)</span></h4>
+                            <div class="trait-bar">
+                                <div class="trait-fill" style="width: <?= (int) ($personalidade['racional'] * 10) ?>%"></div>
+                            </div>
+                            <p class="trait-description">
+                                <?php if ($personalidade['racional'] > 5): ?>
+                                    Você tende a ser mais <strong>racional</strong>, priorizando a lógica e objetividade nas decisões.
+                                <?php else: ?>
+                                    Você tende a ser mais <strong>emocional</strong>, priorizando valores pessoais e harmonia nas decisões.
+                                <?php endif; ?>
+                            </p>
+                        </div>
+
+                        <div class="trait">
+                            <h4>Perceptivo vs. Julgador <span>(<?= (int) ($personalidade['julgador']) ?>/10)</span></h4>
+                            <div class="trait-bar">
+                                <div class="trait-fill" style="width: <?= (int) ($personalidade['julgador'] * 10) ?>%"></div>
+                            </div>
+                            <p class="trait-description">
+                                <?php if ($personalidade['julgador'] > 5): ?>
+                                    Você tende a ser mais <strong>julgador</strong>, preferindo estrutura, planejamento e decisões definidas.
+                                <?php else: ?>
+                                    Você tende a ser mais <strong>perceptivo</strong>, preferindo flexibilidade, adaptabilidade e manter opções abertas.
+                                <?php endif; ?>
+                            </p>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="no-results">
+                        <p>Você ainda não realizou o teste de personalidade. Complete o formulário ao lado para ver seus resultados.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
+
+    <style>
+        /* Estilos para a seção de personalidade */
+        #personalidade {
+            padding: 20px;
+        }
+
+        .personality-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 992px) {
+            .personality-sections {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .personality-section {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+
+        .results-section {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 992px) {
+            .results-section {
+                grid-column: span 1;
+            }
+        }
+
+        .personality-section h3 {
+            color: #007bff;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section-description {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        /* Estilos para o gráfico */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .dominant-trait {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .dominant-trait strong {
+            color: #007bff;
+        }
+
+        /* Estilos para o formulário */
+        .slider-group {
+            margin-bottom: 25px;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .slider-container {
+            position: relative;
+        }
+
+        .slider-container input[type="range"] {
+            width: 100%;
+            height: 8px;
+            appearance: none;
+            background: #e9ecef;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #007bff;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Estilos para a interpretação dos resultados */
+        .personality-traits {
+            display: grid;
+            gap: 25px;
+        }
+
+        .trait h4 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .trait-bar {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .trait-fill {
+            height: 100%;
+            background-color: #007bff;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .trait-description {
+            color: #555;
+            font-size: 15px;
+        }
+
+        .no-results {
+            background-color: #f8f9fa;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            color: #555;
+            border-radius: 4px;
+        }
+
+        /* Botões do formulário */
+        .form-buttons {
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0069d9;
+        }
+    </style>
+
+    <!-- Incluir Chart.js antes do script -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuração dos sliders
+            const sliders = ['extrovertido', 'intuitivo', 'racional', 'julgador'];
+
+            sliders.forEach(slider => {
+                const input = document.getElementById(slider);
+                const output = document.getElementById(`${slider}-value`);
+
+                if (input && output) {
+                    // Atualizar o valor ao carregar a página
+                    output.textContent = input.value;
+                    updateSliderPosition(input, output);
+
+                    // Atualizar o valor quando o slider é movido
+                    input.oninput = function() {
+                        output.textContent = this.value;
+                        updateSliderPosition(this, output);
+                    };
+                }
+            });
+
+            // Função para atualizar a posição do indicador de valor
+            function updateSliderPosition(slider, output) {
+                const percent = (slider.value - slider.min) / (slider.max - slider.min);
+                const position = percent * (slider.offsetWidth - 20) + 10; // Ajustar para o tamanho do thumb
+                output.style.left = `${position}px`;
+            }
+
+            // Criar o gráfico de pizza se existir dados
+            <?php if ($personalidade): ?>
+            const ctx = document.getElementById('personalityChart').getContext('2d');
+
+            // Dados dos traços de personalidade
+            const data = {
+                labels: ['Extrovertido', 'Intuitivo', 'Racional', 'Julgador'],
+                datasets: [{
+                    data: [
+                        <?= (int) ($personalidade['extrovertido'] ?? 0) ?>,
+                        <?= (int) ($personalidade['intuitivo'] ?? 0) ?>,
+                        <?= (int) ($personalidade['racional'] ?? 0) ?>,
+                        <?= (int) ($personalidade['julgador'] ?? 0) ?>
+                    ],
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+
+            // Opções do gráfico
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return `${label}: ${value}/10`;
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Criar gráfico
+            new Chart(ctx, {
+                type: 'pie',
+                data: data,
+                options: options
+            });
+            <?php endif; ?>
+        });
+    </script>
+
 
     <div class="tab-content hidden" id="metas">
         <section class="perfil-conteudo">
