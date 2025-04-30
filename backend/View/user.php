@@ -3,6 +3,15 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Sistema de mensagens para o usuário
+$errorMessage = $_SESSION['error_message'] ?? null;
+$successMessage = $_SESSION['success_message'] ?? null;
+$uploadError = $_SESSION['upload_error'] ?? null;
+
+// Limpar mensagens da sessão após uso
+unset($_SESSION['error_message'], $_SESSION['success_message'], $_SESSION['upload_error']);
+
+
 $controllerPath = __DIR__ . '/../Controller/UserController.php';
 if (file_exists($controllerPath)) {
     require_once $controllerPath;
@@ -59,12 +68,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $new_name = trim($_POST['name']);
         $new_email = trim($_POST['email']);
 
-        if (!empty($new_name) && !empty($new_email)) {
+        $errors = [];
+
+        if (empty($new_name)) {
+            $errors[] = "O nome de usuário não pode estar vazio.";
+        }
+
+        if (empty($new_email)) {
+            $errors[] = "O email não pode estar vazio.";
+        } elseif (!filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = "Por favor, forneça um email válido.";
+        }
+
+        if (empty($errors)) {
             $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
             $stmt->execute([$new_name, $new_email, $user_id]);
             $username = $new_name;
             $user['email'] = $new_email;
+            $_SESSION['success_message'] = "Perfil atualizado com sucesso!";
+        } else {
+            $_SESSION['error_message'] = implode("<br>", $errors);
         }
+
+        header("Location: user.php");
+        exit();
     }
 
     if (isset($_POST['salvar_perfil_completo'])) {
@@ -175,29 +202,47 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["profile_picture"])) 
     $file = $_FILES["profile_picture"];
     $uploadDir = __DIR__ . "/img/";
 
-    $allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-    $fileType = mime_content_type($file["tmp_name"]);
-
-    if ($file["error"] === 0 && in_array($fileType, $allowedTypes)) {
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        $fileName = uniqid() . "_" . basename($file["name"]);
-        $filePath = "img/" . $fileName;
-
-        if (move_uploaded_file($file["tmp_name"], $uploadDir . $fileName)) {
-            $stmt = $pdo->prepare("UPDATE users SET profile_picture = ? WHERE id = ?");
-            $stmt->execute([$filePath, $user_id]);
-            header("Location: user.php");
-            exit();
-        } else {
-            echo "Erro ao mover o arquivo.";
-        }
+    if ($file["error"] !== 0) {
+        // Adicionar mensagem de erro específica baseada no código de erro
+        $errorMessages = [
+            1 => "O arquivo excede o tamanho máximo permitido pelo servidor.",
+            2 => "O arquivo excede o tamanho máximo permitido pelo formulário.",
+            3 => "O upload do arquivo foi feito parcialmente.",
+            4 => "Nenhum arquivo foi enviado.",
+            6 => "Pasta temporária ausente.",
+            7 => "Falha ao escrever arquivo no disco.",
+            8 => "Uma extensão PHP interrompeu o upload do arquivo."
+        ];
+        $_SESSION['upload_error'] = $errorMessages[$file["error"]] ?? "Erro desconhecido no upload.";
     } else {
-        echo "Formato inválido. Use JPG, PNG ou GIF.";
+        $allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+        $fileType = mime_content_type($file["tmp_name"]);
+
+        if (in_array($fileType, $allowedTypes)) {
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $fileName = uniqid() . "_" . basename($file["name"]);
+            $filePath = "img/" . $fileName;
+
+            if (move_uploaded_file($file["tmp_name"], $uploadDir . $fileName)) {
+                $stmt = $pdo->prepare("UPDATE users SET profile_picture = ? WHERE id = ?");
+                $stmt->execute([$filePath, $user_id]);
+                $_SESSION['success_message'] = "Foto de perfil atualizada com sucesso!";
+                header("Location: user.php");
+                exit();
+            } else {
+                $_SESSION['upload_error'] = "Erro ao mover o arquivo.";
+            }
+        } else {
+            $_SESSION['upload_error'] = "Formato inválido. Use JPG, PNG ou GIF.";
+        }
     }
+    header("Location: user.php");
+    exit();
 }
+
 
 if (isset($_POST['teste_personalidade'])) {
     $extrovertido = (int) ($_POST['extrovertido'] ?? 0);
@@ -239,10 +284,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['adicionar_meta'])) {
     $titulo = trim($_POST['titulo']);
     $descricao = trim($_POST['descricao']);
     $prazo = $_POST['prazo'];
-
-    if (!empty($titulo) && !empty($prazo)) {
+    
+    $errors = [];
+    
+    // Validação básica
+    if (empty($titulo)) {
+        $errors[] = "O título da meta é obrigatório.";
+    }
+    
+    if (empty($prazo)) {
+        $errors[] = "O prazo da meta é obrigatório.";
+    } else {
+        // Verificar se a data é válida e não está no passado
+        $prazo_timestamp = strtotime($prazo);
+        $hoje_timestamp = strtotime(date('Y-m-d'));
+        
+        if ($prazo_timestamp === false) {
+            $errors[] = "Por favor, informe uma data válida.";
+        } elseif ($prazo_timestamp < $hoje_timestamp) {
+            $errors[] = "O prazo da meta não pode ser uma data passada.";
+        }
+    }
+    
+    if (empty($errors)) {
         $stmt = $pdo->prepare("INSERT INTO plano_acao (user_id, titulo, descricao, prazo) VALUES (?, ?, ?, ?)");
         $stmt->execute([$user_id, $titulo, $descricao, $prazo]);
+        $_SESSION['success_message'] = "Meta adicionada com sucesso!";
+        header("Location: user.php");
+        exit;
+    } else {
+        $_SESSION['error_message'] = implode("<br>", $errors);
         header("Location: user.php");
         exit;
     }
@@ -255,8 +326,13 @@ $stmt = $pdo->prepare("SELECT * FROM plano_acao WHERE user_id = ? AND concluida 
 $stmt->execute([$user_id]);
 $proximasMetas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Busca todas as metas do usuário
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM plano_acao WHERE user_id = ?");
+// Buscar metas vencidas (pendentes com prazo passado)
+$stmt = $pdo->prepare("SELECT * FROM plano_acao WHERE user_id = ? AND concluida = 0 AND prazo < CURDATE() ORDER BY prazo DESC");
+$stmt->execute([$user_id]);
+$metasVencidas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Busca todas as metas do usuário (exceto as vencidas para o cálculo de progresso)
+$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM plano_acao WHERE user_id = ? AND (concluida = 1 OR prazo >= CURDATE())");
 $stmt->execute([$user_id]);
 $totalMetas = $stmt->fetchColumn();
 
@@ -275,43 +351,141 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['concluir_meta'])) {
     exit;
 }
 
-// Buscar dados do landing page (se existir)
+// Adicione isso ao seu bloco de código PHP
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['excluir_meta'])) {
+    $metaId = (int) $_POST['excluir_meta'];
+    $stmt = $pdo->prepare("DELETE FROM plano_acao WHERE id = ? AND user_id = ?");
+    $stmt->execute([$metaId, $user_id]);
+    $_SESSION['success_message'] = "Meta excluída com sucesso!";
+    header("Location: user.php");
+    exit;
+}
+
+
+// Verificar se o formulário da landing page foi enviado
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['editar_landing'])) {
+    $titulo_principal = trim($_POST['titulo_principal']);
+    $subtitulo_principal = trim($_POST['subtitulo_principal']);
+    $sobre = trim($_POST['sobre']);
+    $educacao = trim($_POST['educacao']);
+    $carreira = trim($_POST['carreira']);
+    $contato = trim($_POST['contato']);
+    $publico = isset($_POST['publico']) ? 1 : 0;
+    
+    // Validação básica
+    if (empty($titulo_principal)) {
+        $_SESSION['landing_error'] = "O título principal é obrigatório";
+    } else {
+        // Verificar se já existe um landing page para este usuário
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM landing_pages WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+        $existe = $stmt->fetchColumn();
+        
+        if ($existe) {
+            // Atualizar landing page existente
+            $stmt = $pdo->prepare("UPDATE landing_pages SET 
+                titulo_principal = ?, 
+                subtitulo_principal = ?, 
+                sobre = ?, 
+                educacao = ?, 
+                carreira = ?, 
+                contato = ?, 
+                publico = ?,
+                atualizado_em = NOW()
+                WHERE user_id = ?");
+            $stmt->execute([
+                $titulo_principal, 
+                $subtitulo_principal, 
+                $sobre, 
+                $educacao, 
+                $carreira, 
+                $contato, 
+                $publico, 
+                $user_id
+            ]);
+            $_SESSION['landing_success'] = "Seu landing page foi atualizado com sucesso!";
+        } else {
+            // Criar novo landing page
+            $stmt = $pdo->prepare("INSERT INTO landing_pages 
+                (user_id, titulo_principal, subtitulo_principal, sobre, educacao, carreira, contato, publico, criado_em, atualizado_em) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+            $stmt->execute([
+                $user_id, 
+                $titulo_principal, 
+                $subtitulo_principal, 
+                $sobre, 
+                $educacao, 
+                $carreira, 
+                $contato, 
+                $publico
+            ]);
+            $_SESSION['landing_success'] = "Seu landing page foi criado com sucesso!";
+        }
+    }
+    
+    header("Location: user.php#landing_pages");
+    exit;
+}
+// Verificar se o usuário atual é o Eric (admin)
+$is_admin = ($user_id == 8); // Eric tem ID 8
+
+// Consulta para buscar os dados do landing page do próprio usuário
 $stmt = $pdo->prepare("SELECT * FROM landing_pages WHERE user_id = ?");
 $stmt->execute([$user_id]);
 $landing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Processar formulário de edição de landing page
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
-    $titulo_principal = $_POST['titulo_principal'] ?? '';
-    $subtitulo_principal = $_POST['subtitulo_principal'] ?? '';
-    $sobre = $_POST['sobre'] ?? '';
-    $educacao = $_POST['educacao'] ?? '';
-    $carreira = $_POST['carreira'] ?? '';
-    $contato = $_POST['contato'] ?? '';
-    $publico = isset($_POST['publico']) ? 1 : 0;
+// Listar todas as landing pages se for admin (Eric)
+$all_landings = [];
+if ($is_admin) {
+    $stmt = $pdo->query("SELECT l.*, u.username 
+                          FROM landing_pages l 
+                          JOIN users u ON l.user_id = u.id 
+                          ORDER BY l.titulo_principal ASC");
+    $all_landings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
-    if ($landing) {
-        $query = "UPDATE landing_pages SET titulo_principal=?, subtitulo_principal=?, sobre=?, educacao=?, carreira=?, contato=?, publico=? WHERE user_id=?";
-        $pdo->prepare($query)->execute([$titulo_principal, $subtitulo_principal, $sobre, $educacao, $carreira, $contato, $publico, $user_id]);
-    } else {
-        $query = "INSERT INTO landing_pages (user_id, titulo_principal, subtitulo_principal, sobre, educacao, carreira, contato, publico) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $pdo->prepare($query)->execute([$user_id, $titulo_principal, $subtitulo_principal, $sobre, $educacao, $carreira, $contato, $publico]);
+// Se um ID específico for solicitado para visualização
+$viewing_landing = null;
+$viewing_user = null;
+if (isset($_GET['view_landing'])) {
+    $view_id = (int)$_GET['view_landing'];
+    
+    // Administrador pode ver qualquer landing page
+    if ($is_admin) {
+        $stmt = $pdo->prepare("SELECT l.*, u.username 
+                              FROM landing_pages l 
+                              JOIN users u ON l.user_id = u.id 
+                              WHERE l.user_id = ?");
+        $stmt->execute([$view_id]);
+        $viewing_landing = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($viewing_landing) {
+            $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+            $stmt->execute([$view_id]);
+            $viewing_user = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+    } 
+    // Usuários comuns só podem ver landing pages públicas
+    else {
+        $stmt = $pdo->prepare("SELECT l.*, u.username 
+                              FROM landing_pages l 
+                              JOIN users u ON l.user_id = u.id 
+                              WHERE l.user_id = ? AND l.publico = 1");
+        $stmt->execute([$view_id]);
+        $viewing_landing = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($viewing_landing) {
+            $stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+            $stmt->execute([$view_id]);
+            $viewing_user = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
     }
-
-    // Recarregar os dados após atualização
-    $stmt = $pdo->prepare("SELECT * FROM landing_pages WHERE user_id = ?");
-    $stmt->execute([$user_id]);
-    $landing = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Redirecionar para atualizar a página
-    header("Location: user.php");
-    exit;
 }
 
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="theme-base" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -320,63 +494,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
     <link rel="stylesheet" href="user-styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAclBMVEX///8hlvMAkPLF4Pvr9v6hzfklmfMAj/Itm/Tv+P6z1/ofl/MQkvMXlPP2+//i8P2p0voAi/LW6/2Bvvd6u/c2nvRjr/bz+v47ofS83PtMpPTZ7f11uPel0PnG4vzq8/2VyflQqvXQ5vxbrPVqsfaDvPcwwE3YAAAEeklEQVR4nO3dW3raMBAFYEsOFgENTjFQm0AwSbr/Ldbu5aEPpR7KkWR952yg/WNJWLdxUTAMwzAMwzAMwzAMwzAMEzZ1v3hMzi+rVfe2vTx/3cQ2/Znyi31QvPfWOuer9rDrV9un2LLfKa15cMSIDNb18XR+j60b83jhb+jIlOtim63wl9O7qnmL2jPBwhEpbtlEbK944Yj0tn2J9SCDCH8im0vWwiHe7uq8hYNRduF/JoMKR2OfuXDoj1WZt3AwutNz3sKhqVZd5sLhMTaZC42x12CDaiTh0FJDvZLHEg6vq4HG1GjCoTO+ZC40JgwxpjAMMarQ2FXuQrFvmQuNGPiEKrLQyD53ofGfuQuNBQ+o8YUi2K4YX2j8MXehcefchWKQU6kUhMbvEhHK7fwH0QInixrh8laqyljr73T6QwpCqV6fb+VSv3b9Z+X8PUiH27rRCKeMB5ttI3d0bfmYjXDMaq9/ju51TsKiWBgtUWDDKUZY1EdlU5U1aiEcJCyKk5LoUS/gMGHR6IhynZ2waLyKaEFTDKCwOKiIfgEBQoWbSjOiopopUli8O4XQuK8IIFZY7DTt1GJ2FbHCi+ZN3GM2FbFC3XjaPp5XwIW1aqyBdESwsPjQNFPIFAot7BRvNh6yT4MWbhQ/GJihBi0srtObqUDWMuDCfvpoKpClYbhQ0RFljxhM4cLL9I5457/wj8CFm7WiIyImUHhhOxmImSLChZrffIdY+sYLPxVCxEtNAOH0nwvIyQy88DT9GVrEUbe0hPN8hopWOtN+eMh+LD0qWuksfw81S4rzfKe5KN68K8TNKM4t/luY//xQ8eI9zzm+Yno403UaRSOd51rbZqlYL7VzXC990WwEe8hWPlaoeoSz3LdQ7a7Nce9ppdohhcwOscKt7miUxdzYBwq3Gh7uaBtOWCoPfqHO7MOEvVUKBXQUGiQsW91xIeAhWoiwbJ36+CVoJAUIn96aSu8zBnb/SXUK+ulG6vr1vVucjuv7jkFb0Jkv3Un29Y2MfwJ7/1F28Sig7r4F6C7CEN+nIYRFKlwFojSEyCvPSQgxS1ApCZGXgpIQgiaG6QjBl53jC8XnfksWXVchutCiyw3FFnrcpbU0hB51UyYVoRzxhc2iCqUNULktptAfQ1T8jCiE1/yILQxVlS6aMFClr2hCvw9WIzpS3cRTuKrCUWpfrvOufTk8QMxFw0SEYo+Bq7QHFro2ZAMNLhS3D1BjL5pQvL0GrpEcUjjwlg2stkd0oXgnn2W07yOgv/4g1smpi/n5B5xw/ISHLA/nSI0TKPzxFZahYbaHpoutG6MRjh/L+WvGj+m4IbZqD9/61faSyieDFML1eXUrXVe+b+ugBeUnRbPLnd7/fkrw9y1ih0IK0w+FFKYfCilMPxRSmH4opDD9UEhh+qGQwvRDIYXph0IK0w+FFKYfCilMPxRSmH4opDD9UEhh+qGQwvRDIYXph0IK0w+FFKYfCilMP+UXOzHezFNY94upOadyG41hGIZhGIZhGIZhGIZhmMflO7iScULsLU8KAAAAAElFTkSuQmCC" type="image/x-icon">
+    <link rel="shortcut icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAclBMVEX///8hlvMAkPLF4Pvr9v6hzfklmfMAj/Itm/Tv+P6z1/ofl/MQkvMXlPP2+//i8P2p0voAi/LW6/2Bvvd6u/c2nvRjr/bz+v47ofS83PtMpPTZ7f11uPel0PnG4vzq8/2VyflQqvXQ5vxbrPVqsfaDvPcwwE3YAAAEeklEQVR4nO3dW3raMBAFYEsOFgENTjFQm0AwSbr/Ldbu5aEPpR7KkWR952yg/WNJWLdxUTAMwzAMwzAMwzAMwzAMEzZ1v3hMzi+rVfe2vTx/3cQ2/Znyi31QvPfWOuer9rDrV9un2LLfKa15cMSIDNb18XR+j60b83jhb+jIlOtim63wl9O7qnmL2jPBwhEpbtlEbK944Yj0tn2J9SCDCH8im0vWwiHe7uq8hYNRduF/JoMKR2OfuXDoj1WZt3AwutNz3sKhqVZd5sLhMTaZC42x12CDaiTh0FJDvZLHEg6vq4HG1GjCoTO+ZC40JgwxpjAMMarQ2FXuQrFvmQuNGPiEKrLQyD53ofGfuQuNBQ+o8YUi2K4YX2j8MXehcefchWKQU6kUhMbvEhHK7fwH0QInixrh8laqyljr73T6QwpCqV6fb+VSv3b9Z+X8PUiH27rRCKeMB5ttI3d0bfmYjXDMaq9/ju51TsKiWBgtUWDDKUZY1EdlU5U1aiEcJCyKk5LoUS/gMGHR6IhynZ2waLyKaEFTDKCwOKiIfgEBQoWbSjOiopopUli8O4XQuK8IIFZY7DTt1GJ2FbHCi+ZN3GM2FbFC3XjaPp5XwIW1aqyBdESwsPjQNFPIFAot7BRvNh6yT4MWbhQ/GJihBi0srtObqUDWMuDCfvpoKpClYbhQ0RFljxhM4cLL9I5457/wj8CFm7WiIyImUHhhOxmImSLChZrffIdY+sYLPxVCxEtNAOH0nwvIyQy88DT9GVrEUbe0hPN8hopWOtN+eMh+LD0qWuksfw81S4rzfKe5KN68K8TNKM4t/luY//xQ8eI9zzm+Yno403UaRSOd51rbZqlYL7VzXC990WwEe8hWPlaoeoSz3LdQ7a7Nce9ppdohhcwOscKt7miUxdzYBwq3Gh7uaBtOWCoPfqHO7MOEvVUKBXQUGiQsW91xIeAhWoiwbJ36+CVoJAUIn96aSu8zBnb/SXUK+ulG6vr1vVucjuv7jkFb0Jkv3Un29Y2MfwJ7/1F28Sig7r4F6C7CEN+nIYRFKlwFojSEyCvPSQgxS1ApCZGXgpIQgiaG6QjBl53jC8XnfksWXVchutCiyw3FFnrcpbU0hB51UyYVoRzxhc2iCqUNULktptAfQ1T8jCiE1/yILQxVlS6aMFClr2hCvw9WIzpS3cRTuKrCUWpfrvOufTk8QMxFw0SEYo+Bq7QHFro2ZAMNLhS3D1BjL5pQvL0GrpEcUjjwlg2stkd0oXgnn2W07yOgv/4g1smpi/n5B5xw/ISHLA/nSI0TKPzxFZahYbaHpoutG6MRjh/L+WvGj+m4IbZqD9/61faSyieDFML1eXUrXVe+b+ugBeUnRbPLnd7/fkrw9y1ih0IK0w+FFKYfCilMPxRSmH4opDD9UEhh+qGQwvRDIYXph0IK0w+FFKYfCilMPxRSmH4opDD9UEhh+qGQwvRDIYXph0IK0w+FFKYfCilMP+UXOzHezFNY94upOadyG41hGIZhGIZhGIZhGIZhmMflO7iScULsLU8KAAAAAElFTkSuQmCC" type="image/x-icon">
+    <link rel="stylesheet" href="dark-mode.css">
 
     <script>
-        // Código JavaScript para controlar o menu mobile
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const mobileMenu = document.getElementById('mobile-menu');
 
-            // Função para alternar o menu mobile
-            mobileMenuBtn.addEventListener('click', function() {
-                mobileMenu.classList.toggle('hidden');
-                // Alterna o ícone do botão entre hambúrguer e X
-                this.textContent = mobileMenu.classList.contains('hidden') ? '☰' : '✕';
-                this.setAttribute('aria-label',
-                    mobileMenu.classList.contains('hidden') ? 'Abrir menu' : 'Fechar menu');
-            });
-
-            // Fechar o menu quando um link é clicado
-            const mobileLinks = mobileMenu.getElementsByTagName('a');
-            for (let i = 0; i < mobileLinks.length; i++) {
-                mobileLinks[i].addEventListener('click', function() {
-                    mobileMenu.classList.add('hidden');
-                    mobileMenuBtn.textContent = '☰';
-                    mobileMenuBtn.setAttribute('aria-label', 'Abrir menu');
+            // Verificar se ambos os elementos existem antes de manipular o DOM
+            if (mobileMenuBtn && mobileMenu) {
+                // Toggle menu mobile
+                mobileMenuBtn.addEventListener('click', function () {
+                    mobileMenu.classList.toggle('hidden');
+                    // Alternar ícone e rótulo acessível
+                    this.textContent = mobileMenu.classList.contains('hidden') ? '☰' : '✕';
+                    this.setAttribute('aria-label', mobileMenu.classList.contains('hidden') ? 'Abrir menu' : 'Fechar menu');
                 });
+
+                // Fechar menu ao clicar em um link
+                const mobileLinks = mobileMenu.getElementsByTagName('a');
+                for (let i = 0; i < mobileLinks.length; i++) {
+                    mobileLinks[i].addEventListener('click', function () {
+                        mobileMenu.classList.add('hidden');
+                        mobileMenuBtn.textContent = '☰';
+                        mobileMenuBtn.setAttribute('aria-label', 'Abrir menu');
+                    });
+                }
             }
 
-            // Adicionar funcionalidade de scroll para o header fixo
-            let prevScrollpos = window.pageYOffset;
-            window.onscroll = function() {
+            // Controle do header fixo ao rolar a página
+            let prevScrollPos = window.scrollY;
+            window.onscroll = function () {
                 const navbar = document.getElementById("navbar");
-                let currentScrollPos = window.pageYOffset;
+                let currentScrollPos = window.scrollY;
 
-                // Adiciona classe quando o scroll é maior que 100px
-                if (currentScrollPos > 100) {
-                    navbar.classList.add("navbar-scrolled");
-                } else {
-                    navbar.classList.remove("navbar-scrolled");
-                }
+                if (navbar) {
+                    // Adicionar classe de estilo quando o scroll é maior que 100px
+                    if (currentScrollPos > 100) {
+                        navbar.classList.add("navbar-scrolled");
+                    } else {
+                        navbar.classList.remove("navbar-scrolled");
+                    }
 
-                // Oculta/mostra navbar baseado na direção do scroll
-                if (prevScrollpos > currentScrollPos) {
-                    navbar.style.top = "0";
-                } else {
-                    // Não oculta se o menu mobile estiver aberto
-                    if (mobileMenu.classList.contains('hidden')) {
-                        navbar.style.top = "-80px";
+                    // Ocultar/mostrar barra com base na direção do scroll
+                    if (prevScrollPos > currentScrollPos) {
+                        navbar.style.top = "0";
+                    } else {
+                        if (mobileMenu.classList.contains('hidden')) {
+                            navbar.style.top = "-80px";
+                        }
                     }
                 }
-                prevScrollpos = currentScrollPos;
-            }
+                prevScrollPos = currentScrollPos;
+            };
         });
     </script>
 
     <style>
-        /* Estilos para o header e navegação */
+        /* Estilos revisados para o menu */
         #navbar {
             position: fixed;
             width: 100%;
@@ -388,81 +565,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
             z-index: 1000;
         }
 
-        #navbar .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 5%;
-            max-width: 1200px;
-            margin: 0 auto;
+        /* Transição suave ao rolar */
+        .navbar-scrolled {
+            background-color: white !important;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15) !important;
         }
 
-        #navbar .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #333;
-            text-decoration: none;
-        }
-
-        #navbar .logo span {
-            color: #007bff;
-        }
-
-        #navbar nav {
-            display: flex;
-            align-items: center;
-        }
-
-        #navbar .desktop-nav {
-            display: flex;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        #navbar .desktop-nav li {
-            margin-left: 25px;
-        }
-
-        #navbar .desktop-nav a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            font-size: 1rem;
-            transition: color 0.3s ease;
-            position: relative;
-        }
-
-        #navbar .desktop-nav a:hover {
-            color: #007bff;
-        }
-
-        #navbar .desktop-nav a::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -5px;
-            left: 0;
-            background-color: #007bff;
-            transition: width 0.3s ease;
-        }
-
-        #navbar .desktop-nav a:hover::after {
-            width: 100%;
-        }
-
-        /* Mobile menu button */
-        #mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #333;
-        }
-
-        /* Mobile menu */
+        /* Menu mobile */
         #mobile-menu {
             position: fixed;
             top: 70px;
@@ -471,46 +580,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
             background-color: white;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
             z-index: 999;
+            opacity: 1;
+            visibility: visible;
             transform: translateY(0);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
 
         #mobile-menu.hidden {
-            transform: translateY(-100%);
+            opacity: 0;
             visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-100%);
         }
 
-        #mobile-menu ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        /* Geral */
+        body {
+            padding-top: 80px;
         }
 
-        #mobile-menu li {
-            border-bottom: 1px solid #eee;
-        }
-
-        #mobile-menu a {
-            display: block;
-            padding: 15px 20px;
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-        }
-
-        #mobile-menu a:hover {
-            background-color: #f8f9fa;
-            color: #007bff;
-        }
-
-        /* Estilo para quando o header fica com fundo sólido após scroll */
-        .navbar-scrolled {
-            background-color: white !important;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15) !important;
-        }
-
-        /* Media queries para responsividade */
         @media (max-width: 992px) {
             #navbar .desktop-nav {
                 display: none;
@@ -519,30 +606,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
             #mobile-menu-btn {
                 display: block;
             }
-
-            #navbar .container {
-                padding: 10px 5%;
-            }
-        }
-
-        /* Ajustes para telas muito pequenas */
-        @media (max-width: 480px) {
-            #navbar .logo {
-                font-size: 1.5rem;
-            }
-        }
-
-        /* Espaço para evitar que o conteúdo da página fique atrás do header fixo */
-        body {
-            padding-top: 80px;
         }
     </style>
 
-    <!-- Navigation -->
     <header id="navbar">
         <div class="container">
             <a href="index.php" class="logo">Projeto de <span>Vida</span></a>
-
             <nav>
                 <ul class="desktop-nav">
                     <li><a href="index.php?#Inicio">Início</a></li>
@@ -552,12 +621,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
                     <li><a href="index.php?#Contato">Contato</a></li>
                     <li><a href="user.php">Perfil</a></li>
                 </ul>
-
                 <button id="mobile-menu-btn" aria-label="Abrir menu">☰</button>
             </nav>
         </div>
-
-        <!-- Mobile Navigation -->
         <div id="mobile-menu" class="hidden">
             <ul>
                 <li><a href="index.php?#Inicio">Início</a></li>
@@ -569,9 +635,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
             </ul>
         </div>
     </header>
-
-    <!-- Adicione um espaço depois do header -->
-    <div style="height: 80px;"></div>
 
 
 
@@ -667,92 +730,216 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
         <button class="perfil-tab" data-tab="landing_pages">Landing page</button>
     </div>
 
-    <div class="tab-content" id="landing_pages">
-        <div class="tab-pane">
-            <ul class="nav nav-tabs" id="landing-tabs">
-                <li class="nav-item">
-                    <a class="nav-link active" href="#" onclick="mostrarAba('landing_preview')">Meu Landing Page</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="mostrarAba('landing_edit')">Editar Landing Page</a>
-                </li>
-            </ul>
+    <!-- Aba de Landing Page -->
+    <div class="tab-content hidden" id="landing_pages">
+        <h2>Meu Landing Page</h2>
 
-            <div class="tab-content mt-3">
-                <!-- Conteúdo da visualização do landing page -->
-                <div id="landing_preview" class="aba-conteudo">
-                    <h2>Meu Landing Page</h2>
+        <!-- Sistema de mensagens -->
+        <?php if (isset($_SESSION['landing_success'])): ?>
+            <div class="alert alert-success">
+                <?= $_SESSION['landing_success'] ?>
+                <?php unset($_SESSION['landing_success']); ?>
+            </div>
+        <?php endif; ?>
 
-                    <?php if ($landing): ?>
-                        <div class="landing-preview">
-                            <div class="topo">
-                                <h1><?= htmlspecialchars($landing['titulo_principal'] ?? 'Meu Currículo') ?></h1>
-                                <p class="subtitulo"><?= htmlspecialchars($landing['subtitulo_principal'] ?? '') ?></p>
-                            </div>
+        <?php if (isset($_SESSION['landing_error'])): ?>
+            <div class="alert alert-danger">
+                <?= $_SESSION['landing_error'] ?>
+                <?php unset($_SESSION['landing_error']); ?>
+            </div>
+        <?php endif; ?>
 
-                            <div class="section"><h3>Sobre Mim</h3><p><?= nl2br(htmlspecialchars($landing['sobre'] ?? '')) ?></p></div>
-                            <div class="section"><h3>Educação</h3><p><?= nl2br(htmlspecialchars($landing['educacao'] ?? '')) ?></p></div>
-                            <div class="section"><h3>Carreira</h3><p><?= nl2br(htmlspecialchars($landing['carreira'] ?? '')) ?></p></div>
-                            <div class="section"><h3>Contato</h3><div class="contato"><?= nl2br(htmlspecialchars($landing['contato'] ?? '')) ?></div></div>
+        <!-- Sub-navegação do landing page -->
+        <div class="landing-tabs mb-4">
+            <button class="landing-tab active" onclick="trocarAbaLanding('landing_preview')">Visualizar</button>
+            <button class="landing-tab" onclick="trocarAbaLanding('landing_edit')">Editar</button>
+            <?php if ($is_admin): ?>
+                <button class="landing-tab" onclick="trocarAbaLanding('landing_admin')">Admin</button>
+            <?php endif; ?>
+        </div>
 
+        <div class="landing-panes">
+            <!-- Visualização do landing page -->
+            <div id="landing_preview" class="landing-pane active">
+                <?php if ($viewing_landing): ?>
+                    <!-- Visualizando landing page de outro usuário -->
+                    <div class="alert alert-info">
+                        <p>Você está visualizando o landing page de: <strong><?= htmlspecialchars($viewing_user['username']) ?></strong></p>
+                        <a href="user.php#landing_pages" class="btn btn-sm btn-outline-primary mt-2">Voltar ao meu landing page</a>
+                    </div>
+
+                    <div class="landing-preview">
+                        <div class="topo">
+                            <h1><?= htmlspecialchars($viewing_landing['titulo_principal']) ?></h1>
+                            <p class="subtitulo"><?= htmlspecialchars($viewing_landing['subtitulo_principal'] ?? '') ?></p>
+                        </div>
+
+                        <div class="section">
+                            <h3>Sobre Mim</h3>
+                            <p><?= nl2br(htmlspecialchars($viewing_landing['sobre'] ?? '')) ?></p>
+                        </div>
+
+                        <div class="section">
+                            <h3>Educação</h3>
+                            <p><?= nl2br(htmlspecialchars($viewing_landing['educacao'] ?? '')) ?></p>
+                        </div>
+
+                        <div class="section">
+                            <h3>Carreira</h3>
+                            <p><?= nl2br(htmlspecialchars($viewing_landing['carreira'] ?? '')) ?></p>
+                        </div>
+
+                        <div class="section">
+                            <h3>Contato</h3>
+                            <div class="contato"><?= nl2br(htmlspecialchars($viewing_landing['contato'] ?? '')) ?></div>
+                        </div>
+                    </div>
+                <?php elseif ($landing): ?>
+                    <!-- Visualizando seu próprio landing page -->
+                    <div class="landing-preview">
+                        <div class="topo">
+                            <h1><?= htmlspecialchars($landing['titulo_principal'] ?? 'Meu Currículo') ?></h1>
+                            <p class="subtitulo"><?= htmlspecialchars($landing['subtitulo_principal'] ?? '') ?></p>
+                        </div>
+
+                        <div class="section">
+                            <h3>Sobre Mim</h3>
+                            <p><?= nl2br(htmlspecialchars($landing['sobre'] ?? '')) ?></p>
+                        </div>
+
+                        <div class="section">
+                            <h3>Educação</h3>
+                            <p><?= nl2br(htmlspecialchars($landing['educacao'] ?? '')) ?></p>
+                        </div>
+
+                        <div class="section">
+                            <h3>Carreira</h3>
+                            <p><?= nl2br(htmlspecialchars($landing['carreira'] ?? '')) ?></p>
+                        </div>
+
+                        <div class="section">
+                            <h3>Contato</h3>
+                            <div class="contato"><?= nl2br(htmlspecialchars($landing['contato'] ?? '')) ?></div>
+                        </div>
+
+                        <div class="mt-4">
                             <a href="landing.php?user_id=<?= $user_id ?>" target="_blank" class="btn btn-primary">Ver Página Completa</a>
+                            <?php if (isset($landing['publico']) && $landing['publico']): ?>
+                                <span class="badge badge-success ml-2">Público</span>
+                            <?php else: ?>
+                                <span class="badge badge-secondary ml-2">Privado</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info">
+                        <p>Você ainda não criou seu landing page. <a href="#" onclick="trocarAbaLanding('landing_edit'); return false;">Clique aqui para criar</a>.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Formulário de edição do landing page -->
+            <div id="landing_edit" class="landing-pane">
+                <form method="POST" action="" class="form-landing">
+                    <div class="form-group">
+                        <label for="titulo_principal">Título Principal</label>
+                        <input type="text" id="titulo_principal" name="titulo_principal" class="form-control"
+                               value="<?= htmlspecialchars($landing['titulo_principal'] ?? '') ?>"
+                               placeholder="Ex: João Silva - Desenvolvedor Web">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subtitulo_principal">Subtítulo</label>
+                        <textarea id="subtitulo_principal" name="subtitulo_principal" class="form-control" rows="2"
+                                  placeholder="Ex: Desenvolvedor Full Stack com 5 anos de experiência"><?= htmlspecialchars($landing['subtitulo_principal'] ?? '') ?></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sobre">Sobre Mim</label>
+                        <textarea id="sobre" name="sobre" class="form-control" rows="4"
+                                  placeholder="Descreva brevemente quem você é, suas habilidades e objetivos"><?= htmlspecialchars($landing['sobre'] ?? '') ?></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="educacao">Educação</label>
+                        <textarea id="educacao" name="educacao" class="form-control" rows="4"
+                                  placeholder="Liste sua formação acadêmica, cursos e certificações"><?= htmlspecialchars($landing['educacao'] ?? '') ?></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="carreira">Carreira</label>
+                        <textarea id="carreira" name="carreira" class="form-control" rows="4"
+                                  placeholder="Descreva sua experiência profissional"><?= htmlspecialchars($landing['carreira'] ?? '') ?></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contato">Contato</label>
+                        <textarea id="contato" name="contato" class="form-control" rows="4"
+                                  placeholder="Adicione suas informações de contato como email, telefone, LinkedIn, etc."><?= htmlspecialchars($landing['contato'] ?? '') ?></textarea>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" id="publico" name="publico" class="form-check-input"
+                            <?= isset($landing['publico']) && $landing['publico'] ? 'checked' : '' ?>>
+                        <label for="publico" class="form-check-label">Tornar meu Landing Page público</label>
+                        <small class="form-text text-muted">Se marcado, qualquer pessoa poderá acessar seu landing page através do link.</small>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="submit" name="editar_landing" class="btn btn-primary">Salvar Landing Page</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Seção de Admin (apenas para o Eric) -->
+            <?php if ($is_admin): ?>
+                <div id="landing_admin" class="landing-pane">
+                    <h3 class="mb-4">Administração de Landing Pages</h3>
+
+                    <?php if (empty($all_landings)): ?>
+                        <div class="alert alert-info">
+                            <p>Ainda não existem landing pages cadastrados no sistema.</p>
                         </div>
                     <?php else: ?>
-                        <div class="alert alert-info">
-                            <p>Você ainda não criou seu landing page. <a href="#" onclick="mostrarAba('landing_edit')">Clique aqui para criar</a>.</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="thead-dark">
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Título</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach ($all_landings as $l): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($l['username']) ?></td>
+                                        <td><?= htmlspecialchars($l['titulo_principal']) ?></td>
+                                        <td>
+                                            <?php if ($l['publico']): ?>
+                                                <span class="badge badge-success">Público</span>
+                                            <?php else: ?>
+                                                <span class="badge badge-secondary">Privado</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <a href="user.php?view_landing=<?= $l['user_id'] ?>#landing_pages" class="btn btn-sm btn-info">Visualizar</a>
+                                            <a href="landing.php?user_id=<?= $l['user_id'] ?>" target="_blank" class="btn btn-sm btn-primary">Ver Completo</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         </div>
                     <?php endif; ?>
                 </div>
-
-                <!-- Formulário de edição do landing page -->
-                <div id="landing_edit" class="aba-conteudo" style="display:none;">
-                    <h2>Editar Meu Landing Page</h2>
-                    <form method="POST" action="user.php" class="form-landing">
-
-                    <div class="form-group">
-                            <label for="titulo_principal">Título Principal</label>
-                            <input type="text" id="titulo_principal" name="titulo_principal" class="form-control" value="<?= htmlspecialchars($landing['titulo_principal'] ?? '') ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="subtitulo_principal">Subtítulo</label>
-                            <textarea id="subtitulo_principal" name="subtitulo_principal" class="form-control" rows="2"><?= htmlspecialchars($landing['subtitulo_principal'] ?? '') ?></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="sobre">Sobre Mim</label>
-                            <textarea id="sobre" name="sobre" class="form-control" rows="4"><?= htmlspecialchars($landing['sobre'] ?? '') ?></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="educacao">Educação</label>
-                            <textarea id="educacao" name="educacao" class="form-control" rows="4"><?= htmlspecialchars($landing['educacao'] ?? '') ?></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="carreira">Carreira</label>
-                            <textarea id="carreira" name="carreira" class="form-control" rows="4"><?= htmlspecialchars($landing['carreira'] ?? '') ?></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="contato">Contato</label>
-                            <textarea id="contato" name="contato" class="form-control" rows="4"><?= htmlspecialchars($landing['contato'] ?? '') ?></textarea>
-                        </div>
-
-                        <div class="form-check mb-3">
-                            <input type="checkbox" id="publico" name="publico" class="form-check-input" <?= isset($landing['publico']) && $landing['publico'] ? 'checked' : '' ?>>
-                            <label for="publico" class="form-check-label">Tornar público</label>
-                        </div>
-
-                        <button type="submit" name="editar_landing" class="btn btn-primary">Salvar Landing Page</button>
-
-                    </form>
-                </div>
-            </div>
+            <?php endif; ?>
         </div>
     </div>
+
     <style>
-        /* Estilo das abas do landing page */
+        /* Estilos para o sistema de abas do landing page */
         .landing-tabs {
             display: flex;
             border-bottom: 1px solid #ddd;
@@ -796,13 +983,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
 
         .landing-pane.active {
             display: block;
-        }
-
-        .section-title {
-            color: #333;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
         }
 
         /* Landing Preview */
@@ -852,25 +1032,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
             border-left: 4px solid #007bff;
         }
 
-        .missing-landing {
-            background-color: #f8f9fa;
-            border-left: 4px solid #17a2b8;
-            padding: 15px;
-            color: #555;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-
-        .missing-landing a {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .missing-landing a:hover {
-            text-decoration: underline;
-        }
-
         /* Formulário */
         .form-landing {
             background-color: #fff;
@@ -890,7 +1051,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
             color: #333;
         }
 
-        .input-field {
+        .form-control {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ddd;
@@ -899,90 +1060,226 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
             transition: border-color 0.3s;
         }
 
-        .input-field:focus {
+        .form-control:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
 
-        textarea.input-field {
+        textarea.form-control {
             resize: vertical;
             min-height: 80px;
         }
 
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 25px;
+        /* Estilos adicionais para a área admin */
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
         }
 
-        .checkbox-container input[type="checkbox"] {
-            margin-right: 10px;
-            width: 18px;
-            height: 18px;
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            color: #212529;
+            border-collapse: collapse;
         }
 
-        .checkbox-container label {
-            cursor: pointer;
-            user-select: none;
+        .table-bordered {
+            border: 1px solid #dee2e6;
         }
 
-        .form-buttons {
-            display: flex;
-            justify-content: flex-start;
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6;
+        }
+
+        .thead-dark th {
+            color: #fff;
+            background-color: #343a40;
+            border-color: #454d55;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            margin-left: 10px;
+        }
+
+        .badge-success {
+            color: #fff;
+            background-color: #28a745;
+        }
+
+        .badge-secondary {
+            color: #fff;
+            background-color: #6c757d;
         }
 
         .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
+            display: inline-block;
+            font-weight: 400;
+            text-align: center;
+            vertical-align: middle;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: background-color 0.3s;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            text-decoration: none;
         }
 
         .btn-primary {
+            color: #fff;
             background-color: #007bff;
-            color: white;
+            border-color: #007bff;
         }
 
         .btn-primary:hover {
             background-color: #0069d9;
+            border-color: #0062cc;
+        }
+
+        .btn-info {
+            color: #fff;
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+
+        .btn-info:hover {
+            color: #fff;
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+
+        .btn-outline-primary {
+            color: #007bff;
+            border-color: #007bff;
+            background-color: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            color: #fff;
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border-radius: 0.2rem;
+        }
+
+        .alert {
+            position: relative;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+
+        .alert-info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem !important;
+        }
+
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .mt-4 {
+            margin-top: 1.5rem !important;
+        }
+
+        .ml-2 {
+            margin-left: 0.5rem !important;
         }
     </style>
 
     <script>
-        function mostrarAbaLanding(abaId) {
-            // Desativa todas as abas
-            document.querySelectorAll('.landing-pane').forEach(pane => {
+        // Função para alternar entre as abas do landing page
+        function trocarAbaLanding(abaId) {
+            // Esconde todas as abas
+            document.querySelectorAll('.landing-pane').forEach(function(pane) {
                 pane.classList.remove('active');
             });
 
-            // Remove a classe ativa de todos os botões
-            document.querySelectorAll('.landing-tab').forEach(tab => {
+            // Desativa todos os botões
+            document.querySelectorAll('.landing-tab').forEach(function(tab) {
                 tab.classList.remove('active');
             });
 
-            // Ativa a aba solicitada
+            // Mostra a aba selecionada
             document.getElementById(abaId).classList.add('active');
 
             // Ativa o botão correspondente
-            const botaoAtivo = document.querySelector(`.landing-tab[data-tab="${abaId}"]`);
-            if (botaoAtivo) {
-                botaoAtivo.classList.add('active');
-            }
+            document.querySelectorAll('.landing-tab').forEach(function(tab) {
+                if (tab.getAttribute('onclick').includes(abaId)) {
+                    tab.classList.add('active');
+                }
+            });
         }
 
-        // Inicialização - verificar se há um landing já salvo
+        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            <?php if ($landing): ?>
-            // Se já tem landing, mostra a visualização
-            mostrarAbaLanding('landing_preview');
-            <?php else: ?>
-            // Se não tem landing, mostra o editor
-            mostrarAbaLanding('landing_edit');
-            <?php endif; ?>
+            // Verificar se há uma landing page específica sendo visualizada
+            const viewingLanding = <?= isset($viewing_landing) ? 'true' : 'false' ?>;
+
+            // Verificar se há hash na URL
+            const hash = window.location.hash.substring(1);
+
+            // Se há landing page para visualizar, mostrar a aba de preview
+            if (viewingLanding) {
+                trocarAbaLanding('landing_preview');
+            }
+            // Se for admin e estiver na seção admin, mostrar a aba admin
+            else if (hash === 'landing_admin' && <?= $is_admin ? 'true' : 'false' ?>) {
+                trocarAbaLanding('landing_admin');
+            }
+            // Caso contrário, decidir com base no landing do usuário
+            else {
+                <?php if (isset($landing) && $landing): ?>
+                trocarAbaLanding('landing_preview');
+                <?php else: ?>
+                trocarAbaLanding('landing_edit');
+                <?php endif; ?>
+            }
         });
     </script>
 
@@ -1850,6 +2147,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
             <?php endif; ?>
         </section>
     </div>
+
+
+    <!-- Metas Vencidas -->
+    <?php if (!empty($metasVencidas)): ?>
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">Metas Vencidas</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group lista-metas">
+                    <?php foreach ($metasVencidas as $meta): ?>
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1"><?= htmlspecialchars($meta['titulo']) ?></h5>
+                                    <?php if (!empty($meta['descricao'])): ?>
+                                        <p class="mb-1 text-muted"><?= htmlspecialchars($meta['descricao']) ?></p>
+                                    <?php endif; ?>
+                                    <small class="text-danger">
+                                        Prazo vencido: <?= date('d/m/Y', strtotime($meta['prazo'])) ?>
+                                    </small>
+                                </div>
+                                <div class="d-flex">
+                                    <form method="post" action="" class="me-2">
+                                        <input type="hidden" name="concluir_meta" value="<?= $meta['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-success">Concluir</button>
+                                    </form>
+                                    <form method="post" action="">
+                                        <input type="hidden" name="excluir_meta" value="<?= $meta['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+    <?php endif; ?>
+
 </main>
 
 <!-- Modais -->
@@ -2364,5 +2701,379 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_landing'])) {
         });
     });
 </script>
+
+
+<!-- Botão de alternância de tema -->
+<div class="theme-toggle" id="theme-toggle">
+    <i class="fas fa-moon icon moon"></i>
+    <i class="fas fa-sun icon sun"></i>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+
+        // Aplicar tema salvo anteriormente
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        themeToggle.addEventListener('click', function() {
+            // Verificar o tema atual
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+
+            // Alternar para o outro tema
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            // Aplicar o novo tema
+            document.documentElement.setAttribute('data-theme', newTheme);
+
+            // Salvar a preferência
+            localStorage.setItem('theme', newTheme);
+
+            // Animação suave
+            document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+        });
+
+        // Verificar preferência do sistema (opcional)
+        if (!localStorage.getItem('theme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+
+</script>
+
+
+<div data-theme="rgb">
+
+
+    <!-- Container dos botões -->
+    <div id="toggle-buttons-container">
+        <!-- Botão para abrir o seletor de cores -->
+        <div id="color-selector">
+            <button id="color-toggle" class="btn-primary" aria-label="Abrir seletor de cores">
+                ⚙
+            </button>
+
+            <!-- Botões de seleção de cores -->
+            <div id="color-options" class="hidden">
+                <button class="theme-btn" data-theme="theme-base" style="background-color: #0064fa;" aria-label="Azul padrão"></button>
+                <button class="theme-btn" data-theme="theme-red" style="background-color: #ff0000;" aria-label="Vermelho"></button>
+                <button class="theme-btn" data-theme="theme-green" style="background-color: #00ff00;" aria-label="Verde"></button>
+                <button class="theme-btn" data-theme="theme-blue" style="background-color: #0000ff;" aria-label="Azul"></button>
+                <button class="theme-btn" data-theme="theme-yellow" style="background-color: #ffff00;" aria-label="Amarelo"></button>
+                <button class="theme-btn" data-theme="theme-purple" style="background-color: #800080;" aria-label="Roxo"></button>
+                <button class="theme-btn" data-theme="theme-pink" style="background-color: #ff69b4;" aria-label="Rosa"></button>
+                <button class="theme-btn" data-theme="theme-teal" style="background-color: #008080;" aria-label="Teal"></button>
+                <button class="theme-btn" data-theme="theme-orange" style="background-color: #ffa500;" aria-label="Laranja"></button>
+                <button class="theme-btn" data-theme="theme-brown" style="background-color: #8b4513;" aria-label="Marrom"></button>
+                <button class="theme-btn" data-theme="theme-gray" style="background-color: #808080;" aria-label="Cinza"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Referências aos elementos
+    const colorToggleButton = document.getElementById('color-toggle');
+    const colorOptionsContainer = document.getElementById('color-options');
+    const themeButtons = document.querySelectorAll('.theme-btn');
+
+    // Exibe ou oculta os botões de cor com animação
+    colorToggleButton.addEventListener('click', () => {
+        colorOptionsContainer.classList.toggle('hidden');
+
+        if (!colorOptionsContainer.classList.contains('hidden')) {
+            colorOptionsContainer.style.opacity = '1';
+            colorOptionsContainer.style.height = 'auto';
+            colorOptionsContainer.style.pointerEvents = 'all';
+            colorToggleButton.style.transform = 'rotate(90deg)';
+        } else {
+            colorOptionsContainer.style.opacity = '0';
+            colorOptionsContainer.style.height = '0';
+            colorOptionsContainer.style.pointerEvents = 'none';
+            colorToggleButton.style.transform = 'rotate(0)';
+        }
+    });
+
+    // Aplicar o tema selecionado
+    themeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const selectedTheme = button.getAttribute('data-theme');
+            document.documentElement.className = selectedTheme; // Aplica o tema
+
+            // Fechar o seletor de cores após a seleção (opcional)
+            colorOptionsContainer.classList.add('hidden');
+            colorOptionsContainer.style.opacity = '0';
+            colorOptionsContainer.style.height = '0';
+            colorOptionsContainer.style.pointerEvents = 'none';
+            colorToggleButton.style.transform = 'rotate(0)';
+        });
+    });
+</script>
+
+<style>
+    /* Container principal */
+    #toggle-buttons-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin: 20px 0;
+    }
+
+
+
+
+    #color-selector {
+        position: relative;
+    }
+
+    #color-toggle:active {
+        transform: scale(0.95);
+    }
+
+    /* Seletor de cores */
+    #color-options {
+        position: absolute;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px;
+        width: 220px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        height: 0;
+        pointer-events: none;
+        overflow: hidden;
+        transition: opacity 0.3s ease, height 0.3s ease, pointer-events 0.3s ease-in;
+        z-index: 10;
+    }
+
+    #color-options:not(.hidden) {
+        opacity: 1;
+        height: auto;
+        pointer-events: all;
+    }
+
+    /* Botões de tema */
+    .theme-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: 2px solid white;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .theme-btn:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+</style>
+
+    <style>
+        :root {
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Botões de tema */
+        #theme-buttons-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .theme-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        /* Tema ciano */
+        .theme-cyan {
+            --primary: #00ffff;
+            --primary-light: #80ffff;
+            --secondary: #e0ffff;
+        }
+
+        /* Tema preto */
+        .theme-black {
+            --primary: #000000;
+            --primary-light: #333333;
+            --secondary: #4d4d4d;
+        }
+
+        /* Tema dourado */
+        .theme-gold {
+            --primary: #ffd700;
+            --primary-light: #ffe54d;
+            --secondary: #fff5b3;
+        }
+
+        /* Tema prata */
+        .theme-silver {
+            --primary: #c0c0c0;
+            --primary-light: #d9d9d9;
+            --secondary: #f2f2f2;
+        }
+
+        /* Tema vermelho */
+        .theme-red {
+            --primary: #ff4d4d;
+            --primary-light: #ff9999;
+            --secondary: #ffdddd;
+        }
+
+        /* Tema verde */
+        .theme-green {
+            --primary: #4dff4d;
+            --primary-light: #99ff99;
+
+            --secondary: #ddffdd;
+        }
+
+        /* Tema azul */
+        .theme-blue {
+            --primary: #4d4dff;
+            --primary-light: #9999ff;
+            --secondary: #ddddff;
+        }
+
+        /* Tema amarelo */
+        .theme-yellow {
+            --primary: #ffff4d;
+            --primary-light: #ffff99;
+            --secondary: #ffffcc;
+        }
+
+        /* Tema roxo */
+        .theme-purple {
+            --primary: #8000ff;
+            --primary-light: #b366ff;
+            --secondary: #e6ccff;
+        }
+
+        /* Tema rosa */
+        .theme-pink {
+            --primary: #ff69b4;
+            --primary-light: #ff9ecb;
+            --secondary: #ffd6e9;
+        }
+
+        /* Tema teal */
+        .theme-teal {
+            --primary: #008080;
+            --primary-light: #4cb3b3;
+            --secondary: #b3e6e6;
+        }
+
+        /* Tema laranja */
+        .theme-orange {
+            --primary: #ffa500;
+            --primary-light: #ffcc80;
+            --secondary: #ffedcc;
+        }
+
+        /* Tema marrom */
+        .theme-brown {
+            --primary: #8b4513;
+            --primary-light: #a36741;
+            --secondary: #d2b89b;
+        }
+
+        /* Tema cinza */
+        .theme-gray {
+            --primary: #808080;
+            --primary-light: #b3b3b3;
+            --secondary: #e6e6e6;
+        }
+
+        /* Aplicação das cores às classes */
+        #navbar .logo span {
+            color: var(--primary);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn:hover,
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+        }
+
+        .perfil-foto .editar-foto {
+            border: 2px solid var(--primary);
+        }
+
+        .landing-preview .section h3 {
+            color: var(--primary);
+        }
+
+        .landing-preview .contato {
+            border-left:4px solid var(--primary);
+        }
+
+        .traco-dominante {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .progresso-barra {
+            background-color: var(--primary-light);
+        }
+
+        #quem-sou-eu .section h3 {
+            color: var(--primary);
+        }
+
+        .range-slider {
+            background: var(--primary-light);
+        }
+
+        .personality-section h3 {
+            color: var(--primary);
+        }
+
+        .dominant-trait strong {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .slider-value {
+            color: var(--primary);
+        }
+
+        .slider-container input[type="range"] {
+            background: var(--primary);
+        }
+
+        .trait-fill {
+            fill: var(--primary);
+        }
+
+        .landing-tab {
+            color: var(--primary);
+        }
+
+        .landing-tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+    </style>
+
+
 </body>
 </html>
