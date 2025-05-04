@@ -1,6 +1,6 @@
 <?php
-include_once  'C:/Turma2/xampp/htdocs/Projeto-de-vida/backend/Controller/UserController.php';
-include_once 'C:/Turma2/xampp/htdocs/Projeto-de-vida/config.php';
+include_once  'C:/xampp/htdocs/Projeto-de-vida/backend/Controller/UserController.php';
+include_once 'C:/xampp/htdocs/Projeto-de-vida/config.php';
 
 $Controller = new UserController($pdo);
 
@@ -10,6 +10,7 @@ if (!empty($_POST)) {
     $email = $_POST['email'];
     $currentdatetime = new DateTime('now');
     $data_de_registro = $currentdatetime->format("Y-m-d H:i:s" . ".000000");
+    $theme_color = 'theme-base';
 
 
     $registred = $Controller->register($username, $email, $password, $data_de_registro);
@@ -19,6 +20,9 @@ if (!empty($_POST)) {
         header("Location: login.php");
     }
 }
+
+include 'header.php';
+
 ?>
 
 <!DOCTYPE html>
@@ -139,6 +143,7 @@ if (!empty($_POST)) {
         </section>
     </div>
 
+    <?php include 'footer.php'; ?>
 
 
 </html>

@@ -1,9 +1,11 @@
+
 <?php
+
 $host = "localhost";
 $db_name = "Projeto de vida";
 $username = "root";
 $password = "";
-$pdo;
+$pdo="";
 
 
 try {

@@ -3,7 +3,7 @@
 /* Variáveis de cores do modo escuro */
 [data-theme="dark"] {
     --background: #121212;
-    --foreground: #e4e6eb;
+    --foreground: #ffffff;
     --primary: #4a8eff;
     --primary-dark: #3a7de0;
     --primary-light: #1a1e2c;
@@ -210,6 +210,20 @@
 [data-theme="dark"] .perfil-tab.active {
     color: var(--primary);
 }
+
+[data-theme="dark"] .landing-tabs {
+    border-bottom-color: var(--gray-300);
+}
+[data-theme="dark"] .landing-tab {
+    color: var(--gray-600);
+}
+[data-theme="dark"] .landing-tab:hover {
+    color: var(--primary);
+}
+[data-theme="dark"] .landing-tab.active {
+    color: var(--primary);
+}
+
 
 [data-theme="dark"] .secao-titulo {
     color: var(--gray-800);

@@ -2,6 +2,8 @@
 session_start();
 require_once __DIR__ . '/../../config.php'; // Caminho correto para o config.php
 
+
+
 $logged_in = isset($_SESSION["user_id"]); // Verifica se há um usuário logado
 
 $feedback_msg = "";
@@ -622,6 +624,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <!-- Particles Background -->
     <canvas id="particles"></canvas>
+
 
     <script src="script.js"></script>
 </body>

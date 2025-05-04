@@ -44,6 +44,46 @@ $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// No início do arquivo, após buscar os dados do usuário
+$themeColor = $user['theme_color'] ?? 'theme-base';
+
+// No bloco de processamento POST
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['theme_color'])) {
+    $newTheme = $_POST['theme_color'];
+    $validThemes = [
+        'theme-base', 'theme-red', 'theme-green', 'theme-blue',
+        'theme-yellow', 'theme-purple', 'theme-pink', 'theme-teal',
+        'theme-orange', 'theme-brown', 'theme-gray'
+    ];
+
+
+
+    if (isset($_POST['theme_color'])) {
+        $newTheme = $_POST['theme_color'];
+        // Validar o tema para segurança
+        $validThemes = ['theme-base', 'theme-red', 'theme-green', 'theme-blue',
+            'theme-yellow', 'theme-purple', 'theme-pink', 'theme-teal',
+            'theme-orange', 'theme-brown', 'theme-gray'];
+
+        if (in_array($newTheme, $validThemes)) {
+            $stmt = $pdo->prepare("UPDATE users SET theme_color = ? WHERE id = ?");
+            $stmt->execute([$newTheme, $user_id]);
+            exit(); // Como estamos usando AJAX, podemos simplesmente sair
+        }
+
+
+        // Se for uma requisição AJAX, retorne um status
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            echo json_encode(['success' => true]);
+            exit;
+        }
+
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+}
+
+
 if (!$user) {
     die("Usuário não encontrado.");
 }
@@ -215,7 +255,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["profile_picture"])) 
         ];
         $_SESSION['upload_error'] = $errorMessages[$file["error"]] ?? "Erro desconhecido no upload.";
     } else {
-        $allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+        $allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
         $fileType = mime_content_type($file["tmp_name"]);
 
         if (in_array($fileType, $allowedTypes)) {
@@ -482,10 +522,12 @@ if (isset($_GET['view_landing'])) {
     }
 }
 
+
+
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR" class="theme-base" data-theme="dark">
+<html lang="pt-BR" class="<?php echo htmlspecialchars($themeColor); ?>" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -732,7 +774,7 @@ if (isset($_GET['view_landing'])) {
 
     <!-- Aba de Landing Page -->
     <div class="tab-content hidden" id="landing_pages">
-        <h2>Meu Landing Page</h2>
+        <h2>Meu Portifolio</h2>
 
         <!-- Sistema de mensagens -->
         <?php if (isset($_SESSION['landing_success'])): ?>
@@ -958,19 +1000,16 @@ if (isset($_GET['view_landing'])) {
         }
 
         .landing-tab:hover {
-            color: #007bff;
+            color: var(--primary);
         }
 
-        .landing-tab.active {
-            color: #007bff;
-            font-weight: 600;
-        }
+
 
         .landing-tab.active:after {
             content: '';
             position: absolute;
             height: 3px;
-            background-color: #007bff;
+            background-color: var(--primary);
             width: 100%;
             bottom: -1px;
             left: 0;
@@ -1927,7 +1966,7 @@ if (isset($_GET['view_landing'])) {
             appearance: none;
             width: 20px;
             height: 20px;
-            background: #007bff;
+            background: var(--primary);
             border-radius: 50%;
             cursor: pointer;
         }
@@ -2703,376 +2742,397 @@ if (isset($_GET['view_landing'])) {
 </script>
 
 
-<!-- Botão de alternância de tema -->
-<div class="theme-toggle" id="theme-toggle">
-    <i class="fas fa-moon icon moon"></i>
-    <i class="fas fa-sun icon sun"></i>
-</div>
+<div class="style-switcher">
+    <!-- Botão de alternância do painel -->
+    <div class="style-switcher-toggler s-icon">
+        <i class="fas fa-palette fa-spin"></i>
+    </div>
 
+    <!-- Botão claro/escuro -->
+    <div class="day-night s-icon" id="theme-toggle">
+        <i class="fas fa-moon icon moon"></i>
+        <i class="fas fa-sun icon sun"></i>
+    </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const themeToggle = document.getElementById('theme-toggle');
-        const savedTheme = localStorage.getItem('theme') || 'light';
-
-        // Aplicar tema salvo anteriormente
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        themeToggle.addEventListener('click', function() {
-            // Verificar o tema atual
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-
-            // Alternar para o outro tema
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-            // Aplicar o novo tema
-            document.documentElement.setAttribute('data-theme', newTheme);
-
-            // Salvar a preferência
-            localStorage.setItem('theme', newTheme);
-
-            // Animação suave
-            document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-        });
-
-        // Verificar preferência do sistema (opcional)
-        if (!localStorage.getItem('theme') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        }
-    });
-
-</script>
-
-
-<div data-theme="rgb">
-
-
-    <!-- Container dos botões -->
-    <div id="toggle-buttons-container">
-        <!-- Botão para abrir o seletor de cores -->
-        <div id="color-selector">
-            <button id="color-toggle" class="btn-primary" aria-label="Abrir seletor de cores">
-                ⚙
-            </button>
-
-            <!-- Botões de seleção de cores -->
-            <div id="color-options" class="hidden">
-                <button class="theme-btn" data-theme="theme-base" style="background-color: #0064fa;" aria-label="Azul padrão"></button>
-                <button class="theme-btn" data-theme="theme-red" style="background-color: #ff0000;" aria-label="Vermelho"></button>
-                <button class="theme-btn" data-theme="theme-green" style="background-color: #00ff00;" aria-label="Verde"></button>
-                <button class="theme-btn" data-theme="theme-blue" style="background-color: #0000ff;" aria-label="Azul"></button>
-                <button class="theme-btn" data-theme="theme-yellow" style="background-color: #ffff00;" aria-label="Amarelo"></button>
-                <button class="theme-btn" data-theme="theme-purple" style="background-color: #800080;" aria-label="Roxo"></button>
-                <button class="theme-btn" data-theme="theme-pink" style="background-color: #ff69b4;" aria-label="Rosa"></button>
-                <button class="theme-btn" data-theme="theme-teal" style="background-color: #008080;" aria-label="Teal"></button>
-                <button class="theme-btn" data-theme="theme-orange" style="background-color: #ffa500;" aria-label="Laranja"></button>
-                <button class="theme-btn" data-theme="theme-brown" style="background-color: #8b4513;" aria-label="Marrom"></button>
-                <button class="theme-btn" data-theme="theme-gray" style="background-color: #808080;" aria-label="Cinza"></button>
-            </div>
+    <!-- Painel de cores -->
+    <div class="theme-panel">
+        <h4>Temas</h4>
+        <div class="colors">
+            <button class="theme-btn" data-theme="theme-base" style="background-color: #0064fa;" aria-label="Azul padrão"></button>
+            <button class="theme-btn" data-theme="theme-red" style="background-color: #ff0000;" aria-label="Vermelho"></button>
+            <button class="theme-btn" data-theme="theme-green" style="background-color: #00ff00;" aria-label="Verde"></button>
+            <button class="theme-btn" data-theme="theme-blue" style="background-color: #0000ff;" aria-label="Azul"></button>
+            <button class="theme-btn" data-theme="theme-yellow" style="background-color: #ffff00;" aria-label="Amarelo"></button>
+            <button class="theme-btn" data-theme="theme-purple" style="background-color: #800080;" aria-label="Roxo"></button>
+            <button class="theme-btn" data-theme="theme-pink" style="background-color: #ff69b4;" aria-label="Rosa"></button>
+            <button class="theme-btn" data-theme="theme-teal" style="background-color: #008080;" aria-label="Teal"></button>
+            <button class="theme-btn" data-theme="theme-orange" style="background-color: #ffa500;" aria-label="Laranja"></button>
+            <button class="theme-btn" data-theme="theme-brown" style="background-color: #8b4513;" aria-label="Marrom"></button>
+            <button class="theme-btn" data-theme="theme-gray" style="background-color: #808080;" aria-label="Cinza"></button>
         </div>
     </div>
 </div>
 
-<script>
-    // Referências aos elementos
-    const colorToggleButton = document.getElementById('color-toggle');
-    const colorOptionsContainer = document.getElementById('color-options');
-    const themeButtons = document.querySelectorAll('.theme-btn');
-
-    // Exibe ou oculta os botões de cor com animação
-    colorToggleButton.addEventListener('click', () => {
-        colorOptionsContainer.classList.toggle('hidden');
-
-        if (!colorOptionsContainer.classList.contains('hidden')) {
-            colorOptionsContainer.style.opacity = '1';
-            colorOptionsContainer.style.height = 'auto';
-            colorOptionsContainer.style.pointerEvents = 'all';
-            colorToggleButton.style.transform = 'rotate(90deg)';
-        } else {
-            colorOptionsContainer.style.opacity = '0';
-            colorOptionsContainer.style.height = '0';
-            colorOptionsContainer.style.pointerEvents = 'none';
-            colorToggleButton.style.transform = 'rotate(0)';
-        }
-    });
-
-    // Aplicar o tema selecionado
-    themeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const selectedTheme = button.getAttribute('data-theme');
-            document.documentElement.className = selectedTheme; // Aplica o tema
-
-            // Fechar o seletor de cores após a seleção (opcional)
-            colorOptionsContainer.classList.add('hidden');
-            colorOptionsContainer.style.opacity = '0';
-            colorOptionsContainer.style.height = '0';
-            colorOptionsContainer.style.pointerEvents = 'none';
-            colorToggleButton.style.transform = 'rotate(0)';
-        });
-    });
-</script>
-
 <style>
-    /* Container principal */
-    #toggle-buttons-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        margin: 20px 0;
+    /* Style Switcher */
+    .style-switcher {
+        position: fixed;
+        right: 0;
+        top: 60px;
+        padding: 15px;
+        width: 200px;
+        background: var(--bg-black-100, #fff);
+        z-index: 101;
+        border-radius: 5px;
+        transform: translateX(100%);
+        border: 1px solid var(--primary, #0064fa);
+        transition: all 0.3s ease;
     }
 
-
-
-
-    #color-selector {
-        position: relative;
+    .style-switcher.open {
+        transform: translateX(0%);
+        box-shadow: -3px 0 15px rgba(0,0,0,0.1);
     }
 
-    #color-toggle:active {
-        transform: scale(0.95);
-    }
-
-    /* Seletor de cores */
-    #color-options {
+    .style-switcher .s-icon {
         position: absolute;
-        top: 70px;
-        left: 50%;
-        transform: translateX(-50%);
+        height: 40px;
+        width: 40px;
+        text-align: center;
+        background: var(--bg-black-100, #fff);
+        color: var(--primary, #0064fa);
+        right: 100%;
+        border: 1px solid var(--primary, #0064fa);
+        margin-right: 25px;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .style-switcher .s-icon i {
+        line-height: 40px;
+        font-size: 20px;
+    }
+
+    .style-switcher .s-icon:hover {
+        background: var(--primary, #0064fa);
+        color: #fff;
+    }
+
+    .style-switcher .style-switcher-toggler {
+        top: 0;
+    }
+
+    .style-switcher .day-night {
+        top: 55px;
+    }
+
+    .style-switcher h4 {
+        margin: 0 0 10px;
+        color: var(--text-black-700, #333);
+        font-size: 16px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+
+    .style-switcher .colors {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
-        padding: 10px;
-        width: 220px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        opacity: 0;
-        height: 0;
-        pointer-events: none;
-        overflow: hidden;
-        transition: opacity 0.3s ease, height 0.3s ease, pointer-events 0.3s ease-in;
-        z-index: 10;
+        padding: 5px;
     }
 
-    #color-options:not(.hidden) {
-        opacity: 1;
-        height: auto;
-        pointer-events: all;
-    }
-
-    /* Botões de tema */
-    .theme-btn {
+    .style-switcher .theme-btn {
         width: 35px;
         height: 35px;
         border-radius: 50%;
-        border: 2px solid white;
+        border: 2px solid #fff;
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
     }
 
-    .theme-btn:hover {
-        transform: scale(1.2);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    .style-switcher .theme-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 8px rgba(0,0,0,0.3);
     }
+
+    /* Animação para o ícone de configuração */
+    @keyframes fa-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .fa-spin {
+        animation: fa-spin 2s infinite linear;
+    }
+
+    /* Animação para o botão claro/escuro */
+    [data-theme='dark'] .day-night .sun {
+        display: none;
+    }
+
+    [data-theme='dark'] .day-night .moon {
+        display: block;
+    }
+
+    [data-theme='light'] .day-night .sun {
+        display: block;
+    }
+
+    [data-theme='light'] .day-night .moon {
+        display: none;
+    }
+
+    /* Temas escuro/claro */
+    [data-theme='dark'] {
+        --bg-black-100: #222;
+        --text-black-700: #fff;
+    }
+
+    [data-theme='light'] {
+        --bg-black-100: #fff;
+        --text-black-700: #333;
+    }
+
+    /* Tema ciano */
+    .theme-cyan {
+        --primary: #00ffff;
+        --primary-light: #80ffff;
+        --secondary: #e0ffff;
+    }
+
+    /* Tema preto */
+    .theme-black {
+        --primary: #000000;
+        --primary-light: #333333;
+        --secondary: #4d4d4d;
+    }
+
+    /* Tema dourado */
+    .theme-gold {
+        --primary: #ffd700;
+        --primary-light: #ffe54d;
+        --secondary: #fff5b3;
+    }
+
+    /* Tema prata */
+    .theme-silver {
+        --primary: #c0c0c0;
+        --primary-light: #d9d9d9;
+        --secondary: #f2f2f2;
+    }
+
+    /* Tema vermelho */
+    .theme-red {
+        --primary: #ff4d4d;
+        --primary-light: #ff9999;
+        --secondary: #ffdddd;
+    }
+
+    /* Tema verde */
+    .theme-green {
+        --primary: #4dff4d;
+        --primary-light: #99ff99;
+
+        --secondary: #ddffdd;
+    }
+
+    /* Tema azul */
+    .theme-blue {
+        --primary: #4d4dff;
+        --primary-light: #9999ff;
+        --secondary: #ddddff;
+    }
+
+    /* Tema amarelo */
+    .theme-yellow {
+        --primary: #ffff4d;
+        --primary-light: #ffff99;
+        --secondary: #ffffcc;
+    }
+
+    /* Tema roxo */
+    .theme-purple {
+        --primary: #8000ff;
+        --primary-light: #b366ff;
+        --secondary: #e6ccff;
+    }
+
+    /* Tema rosa */
+    .theme-pink {
+        --primary: #fd55ac;
+        --primary-light: #ffc0ff;
+        --secondary: #ffd6e9;
+    }
+
+    /* Tema teal */
+    .theme-teal {
+        --primary: #008080;
+        --primary-light: #4cb3b3;
+        --secondary: #b3e6e6;
+    }
+
+    /* Tema laranja */
+    .theme-orange {
+        --primary: #ffa500;
+        --primary-light: #ffcc80;
+        --secondary: #ffedcc;
+    }
+
+    /* Tema marrom */
+    .theme-brown {
+        --primary: #8b4513;
+        --primary-light: #a36741;
+        --secondary: #d2b89b;
+    }
+
+    /* Tema cinza */
+    .theme-gray {
+        --primary: #808080;
+        --primary-light: #b3b3b3;
+        --secondary: #e6e6e6;
+    }
+
+    /* Aplicação das cores às classes */
+    #navbar .logo span {
+        color: var(--primary);
+    }
+
+    .btn {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .btn:hover,
+    .btn-primary:hover {
+        background-color: var(--primary-light);
+    }
+
+    .perfil-foto .editar-foto {
+        border: 2px solid var(--primary);
+    }
+
+    .landing-preview .section h3 {
+        color: var(--primary);
+    }
+
+    .landing-preview .contato {
+        border-left:4px solid var(--primary);
+    }
+
+    .traco-dominante {
+        background-color: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .progresso-barra {
+        background-color: var(--primary-light);
+    }
+
+    #quem-sou-eu .section h3 {
+        color: var(--primary);
+    }
+
+    .range-slider {
+        background: var(--primary-light);
+    }
+
+    .personality-section h3 {
+        color: var(--primary);
+    }
+
+    .dominant-trait strong {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .slider-value {
+        color: var(--primary);
+        background-color: var(--primary-light);
+    }
+
+
+
+    .trait-fill {
+        background-color: var(--primary);
+    }
+
+
+
+    .landing-tab.active {
+        border-bottom-color: var(--primary);
+
+    }
+
 </style>
 
-    <style>
-        :root {
-            transition: all 0.3s ease-in-out;
-        }
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const styleSwitcher = document.querySelector('.style-switcher');
+        const styleSwitcherToggler = document.querySelector('.style-switcher-toggler');
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeButtons = document.querySelectorAll('.theme-btn');
 
-        /* Botões de tema */
-        #theme-buttons-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-        }
+        // Toggle do painel
+        styleSwitcherToggler.addEventListener('click', () => {
+            styleSwitcher.classList.toggle('open');
+        });
 
-        .theme-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 1px solid #000;
-            cursor: pointer;
-        }
+        // Fechar ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!styleSwitcher.contains(e.target) && !styleSwitcherToggler.contains(e.target)) {
+                styleSwitcher.classList.remove('open');
+            }
+        });
 
-        /* Tema ciano */
-        .theme-cyan {
-            --primary: #00ffff;
-            --primary-light: #80ffff;
-            --secondary: #e0ffff;
-        }
 
-        /* Tema preto */
-        .theme-black {
-            --primary: #000000;
-            --primary-light: #333333;
-            --secondary: #4d4d4d;
-        }
 
-        /* Tema dourado */
-        .theme-gold {
-            --primary: #ffd700;
-            --primary-light: #ffe54d;
-            --secondary: #fff5b3;
-        }
 
-        /* Tema prata */
-        .theme-silver {
-            --primary: #c0c0c0;
-            --primary-light: #d9d9d9;
-            --secondary: #f2f2f2;
-        }
+        // Toggle do tema claro/escuro
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
 
-        /* Tema vermelho */
-        .theme-red {
-            --primary: #ff4d4d;
-            --primary-light: #ff9999;
-            --secondary: #ffdddd;
-        }
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-        /* Tema verde */
-        .theme-green {
-            --primary: #4dff4d;
-            --primary-light: #99ff99;
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
 
-            --secondary: #ddffdd;
-        }
+        // Seleção de cores
+        themeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const selectedTheme = button.getAttribute('data-theme');
+                const formData = new FormData();
+                formData.append('theme_color', selectedTheme);
 
-        /* Tema azul */
-        .theme-blue {
-            --primary: #4d4dff;
-            --primary-light: #9999ff;
-            --secondary: #ddddff;
-        }
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            document.documentElement.className = selectedTheme;
+                            styleSwitcher.classList.remove('open');
+                        }
+                    })
+                    .catch(error => console.error('Erro ao salvar o tema:', error));
+            });
+        });
 
-        /* Tema amarelo */
-        .theme-yellow {
-            --primary: #ffff4d;
-            --primary-light: #ffff99;
-            --secondary: #ffffcc;
+        // Verificar preferência do sistema
+        if (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
         }
+    });
+</script>
 
-        /* Tema roxo */
-        .theme-purple {
-            --primary: #8000ff;
-            --primary-light: #b366ff;
-            --secondary: #e6ccff;
-        }
-
-        /* Tema rosa */
-        .theme-pink {
-            --primary: #ff69b4;
-            --primary-light: #ff9ecb;
-            --secondary: #ffd6e9;
-        }
-
-        /* Tema teal */
-        .theme-teal {
-            --primary: #008080;
-            --primary-light: #4cb3b3;
-            --secondary: #b3e6e6;
-        }
-
-        /* Tema laranja */
-        .theme-orange {
-            --primary: #ffa500;
-            --primary-light: #ffcc80;
-            --secondary: #ffedcc;
-        }
-
-        /* Tema marrom */
-        .theme-brown {
-            --primary: #8b4513;
-            --primary-light: #a36741;
-            --secondary: #d2b89b;
-        }
-
-        /* Tema cinza */
-        .theme-gray {
-            --primary: #808080;
-            --primary-light: #b3b3b3;
-            --secondary: #e6e6e6;
-        }
-
-        /* Aplicação das cores às classes */
-        #navbar .logo span {
-            color: var(--primary);
-        }
-
-        .btn {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn:hover,
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-        }
-
-        .perfil-foto .editar-foto {
-            border: 2px solid var(--primary);
-        }
-
-        .landing-preview .section h3 {
-            color: var(--primary);
-        }
-
-        .landing-preview .contato {
-            border-left:4px solid var(--primary);
-        }
-
-        .traco-dominante {
-            background-color: var(--primary-light);
-            color: var(--primary);
-        }
-
-        .progresso-barra {
-            background-color: var(--primary-light);
-        }
-
-        #quem-sou-eu .section h3 {
-            color: var(--primary);
-        }
-
-        .range-slider {
-            background: var(--primary-light);
-        }
-
-        .personality-section h3 {
-            color: var(--primary);
-        }
-
-        .dominant-trait strong {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .slider-value {
-            color: var(--primary);
-        }
-
-        .slider-container input[type="range"] {
-            background: var(--primary);
-        }
-
-        .trait-fill {
-            fill: var(--primary);
-        }
-
-        .landing-tab {
-            color: var(--primary);
-        }
-
-        .landing-tab.active {
-            background-color: var(--primary);
-            color: white;
-        }
-    </style>
 
 
 </body>

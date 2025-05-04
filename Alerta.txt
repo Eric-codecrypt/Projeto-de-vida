@@ -1,5 +1,0 @@
-
-login-google tá em manutenção
-
-::aviso previo pra ninguem mecher nele, porque poderá influenciar no resto do codigo, então tira o dedo.
-

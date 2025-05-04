@@ -1,7 +1,10 @@
 <?php
 session_start();
-include_once 'C:/Turma2/xampp/htdocs/Projeto-de-vida/backend/Controller/UserController.php';
-include_once 'C:/Turma2/xampp/htdocs/Projeto-de-vida/config.php';
+include_once 'C:/xampp/htdocs/Projeto-de-vida/backend/Controller/UserController.php';
+include_once 'C:/xampp/htdocs/Projeto-de-vida/config.php';
+
+
+
 
 $Controller = new UserController($pdo);
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -50,5 +53,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <button type="submit">Alterar Senha</button>
     </form>
 </body>
+
+
+
+
 
 </html>

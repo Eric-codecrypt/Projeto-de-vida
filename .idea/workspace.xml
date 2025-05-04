@@ -5,14 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8b91091e-6319-4979-8573-7429aedbc059" name="Changes" comment="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
-      <change afterPath="$PROJECT_DIR$/backend/View/dark-mode.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/View/landing.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Alerta e documentação.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Alerta.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/Esqueci_senha.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/Esqueci_senha.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/View/dark-mode.css" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/dark-mode.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/index.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/index.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/login.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/login.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/register.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/styles.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/user.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/user.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.php" beforeDir="false" afterPath="$PROJECT_DIR$/config.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/styles.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/login-google/includes/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/login-google/includes/styles.css" afterDir="false" />
     </list>
@@ -44,7 +47,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/Eric-codecrypt/Projeto-de-vida.git&quot;,
-    &quot;accountId&quot;: &quot;db3bb088-a0da-4389-81ec-3a71de73cd2e&quot;
+    &quot;accountId&quot;: &quot;19507146-d8da-4810-8df3-bb201856b6da&quot;
   }
 }</component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../php/php.exe" />
@@ -69,6 +72,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -86,8 +90,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-PS-251.23774.436" />
-        <option value="bundled-php-predefined-a98d8de5180a-aaeaa8632555-com.jetbrains.php.sharedIndexes-PS-251.23774.436" />
+        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-PS-251.23774.466" />
+        <option value="bundled-php-predefined-a98d8de5180a-aaeaa8632555-com.jetbrains.php.sharedIndexes-PS-251.23774.466" />
       </set>
     </attachedChunks>
   </component>
@@ -101,6 +105,9 @@
       <workItem from="1745579305555" duration="4991000" />
       <workItem from="1745584622243" duration="15694000" />
       <workItem from="1746008376369" duration="24595000" />
+      <workItem from="1746040507966" duration="16515000" />
+      <workItem from="1746133871093" duration="7597000" />
+      <workItem from="1746387514446" duration="5696000" />
     </task>
     <task id="LOCAL-00001" summary="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
       <option name="closed" value="true" />

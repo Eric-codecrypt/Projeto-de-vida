@@ -1,0 +1,22 @@
+
+login-google tá em manutenção
+
+::aviso previo pra ninguem mecher nele, porque poderá influenciar no resto do codigo, então tira o dedo.
+
+old__>
+
+Atualização do alerta-------------------------------------------------------------------------------------------------------------------------------
+
+bem, o login-google foi temporariamente removido junto com vendor do login.php, não vai dar tempo de resolver.
+então o dark-mode para todas as páginas foi temporariamente desativado e sua produção levemente retardada, pois
+a integração não vai ser efetiva então preferi utilizar apenas a pagina user.php como um teste e que o usuario possa
+ter uma ideia de como seria o "dark-mode"/"alternância de tema".
+
+new__>
+
+Documentação prossegue aqui------------------------------------------------------------------------------------------------------------------------
+
+::Projeto de vida
+
+-Meu projeto de vida é baseado no que eu penso sobre meu futuro acadêmico.
+
