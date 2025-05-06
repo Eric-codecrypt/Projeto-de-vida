@@ -5,19 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8b91091e-6319-4979-8573-7429aedbc059" name="Changes" comment="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
-      <change afterPath="$PROJECT_DIR$/Alerta e documentação.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Alerta.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/Esqueci_senha.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/Esqueci_senha.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/dark-mode.css" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/dark-mode.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/index.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/index.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/View/landing.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/landing.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/login.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/login.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/register.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/styles.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/user.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/user.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.php" beforeDir="false" afterPath="$PROJECT_DIR$/config.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/styles.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/login-google/includes/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/login-google/includes/styles.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,7 +98,7 @@
       <workItem from="1746008376369" duration="24595000" />
       <workItem from="1746040507966" duration="16515000" />
       <workItem from="1746133871093" duration="7597000" />
-      <workItem from="1746387514446" duration="5696000" />
+      <workItem from="1746387514446" duration="8526000" />
     </task>
     <task id="LOCAL-00001" summary="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
       <option name="closed" value="true" />
@@ -125,7 +116,15 @@
       <option name="project" value="LOCAL" />
       <updated>1745606631027</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
+      <option name="closed" value="true" />
+      <created>1746400469598</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1746400469598</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -21,7 +21,7 @@ if (!empty($_POST)) {
     }
 }
 
-include 'header.php';
+
 
 ?>
 
@@ -105,17 +105,17 @@ include 'header.php';
         </header>
         <br>
         <br>
-        <br>
-        <br>
-        <br>
+
         <section>
             <div>
                 <form method="POST" enctype="multipart/form-data">
                     <input required type="text" name="username" placeholder="nome de usuário">
+                    <br>
                     <input required type="email" name="email" placeholder="email">
+                    <br>
                     <input required type="password" name="password" placeholder="senha">
                     <br>
-                    <button class="btn" type="submit">Cadastrar Conta</button>
+                    <button  class="btn btn-primary" style="white" type="submit">Cadastrar Conta</button>
                 </form>
             </div>
 
@@ -135,15 +135,15 @@ include 'header.php';
             <br>
             <br>
             <p>
-                Já tem uma conta?
+                Já tem uma conta?</p>
             <div>
-                <button class="btn"><a href="login.php">Faça login</a></button>
+                <button class="btn btn-primary"><a  style="color: white" href="login.php">Faça login</a></button>
             </div>
-            </p>
+
         </section>
     </div>
 
-    <?php include 'footer.php'; ?>
+
 
 
 </html>

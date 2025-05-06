@@ -5,6 +5,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../../config.php';
 
+
+
 // Verificar se um ID de usuário foi fornecido
 if (!isset($_GET['user_id'])) {
     die("ID de usuário não especificado.");
@@ -39,6 +41,7 @@ $page_title = $landing['titulo_principal'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($landing['titulo_principal']) ?></title>
     <link rel="stylesheet" href="dark-mode.css">
+    <link rel="stylesheet" href="styles.css">
     <style>
         /* Mantenha o CSS original aqui */
         * {
@@ -140,7 +143,7 @@ $page_title = $landing['titulo_principal'];
         }
 
         footer a {
-            color: #007bff;
+            color: #ffffff;
             text-decoration: none;
         }
 
@@ -215,10 +218,15 @@ $page_title = $landing['titulo_principal'];
 
     <footer>
         <p>&copy; <?= date('Y') ?> <?= htmlspecialchars($landing['username']) ?> - Todos os direitos reservados</p>
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <p><a href="user.php">Voltar ao painel</a></p>
-        <?php endif; ?>
+
+
+    <?php if (isset($_SESSION['user_id'])): ?>
+        <p class="btn-primary"><a href="user.php">Voltar ao painel</a></p>
+    <?php endif; ?>
     </footer>
+
 </div>
+
+
 </body>
 </html>
