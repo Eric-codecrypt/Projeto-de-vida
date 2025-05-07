@@ -4,14 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b91091e-6319-4979-8573-7429aedbc059" name="Changes" comment="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
+    <list default="true" id="8b91091e-6319-4979-8573-7429aedbc059" name="Changes" comment="07/05 update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Alerta e documentação.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Alerta e documentação.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/dark-mode.css" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/dark-mode.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/register.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/script.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/user-styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/user-styles.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/user.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/user.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -31,6 +25,12 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="PUSH_TAGS">
+      <GitPushTagMode>
+        <option name="argument" value="--tags" />
+        <option name="title" value="All" />
+      </GitPushTagMode>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -105,7 +105,7 @@
       <workItem from="1746133871093" duration="7597000" />
       <workItem from="1746387514446" duration="8526000" />
       <workItem from="1746616215112" duration="29000" />
-      <workItem from="1746616250812" duration="14505000" />
+      <workItem from="1746616250812" duration="16773000" />
     </task>
     <task id="LOCAL-00001" summary="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
       <option name="closed" value="true" />
@@ -131,7 +131,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746400469598</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="07/05 update">
+      <option name="closed" value="true" />
+      <created>1746635577292</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1746635577292</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -139,6 +147,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar" />
-    <option name="LAST_COMMIT_MESSAGE" value="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar" />
+    <MESSAGE value="07/05 update" />
+    <option name="LAST_COMMIT_MESSAGE" value="07/05 update" />
   </component>
 </project>

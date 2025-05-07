@@ -2943,7 +2943,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["background_image"]))
     <!-- Painel de cores -->
     <div class="theme-panel">
         <h4>Temas</h4>
+
+      <?php  echo htmlspecialchars($themeColor); ?>
+        <hr>
+        <br>
         <div class="colors">
+            <!-- Temas originais -->
             <button class="theme-btn" data-theme="theme-base" style="background-color: #0064fa;" aria-label="Azul padrão"></button>
             <button class="theme-btn" data-theme="theme-red" style="background-color: #ff0000;" aria-label="Vermelho"></button>
             <button class="theme-btn" data-theme="theme-green" style="background-color: #00ff00;" aria-label="Verde"></button>
@@ -2955,8 +2960,67 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["background_image"]))
             <button class="theme-btn" data-theme="theme-orange" style="background-color: #ffa500;" aria-label="Laranja"></button>
             <button class="theme-btn" data-theme="theme-brown" style="background-color: #8b4513;" aria-label="Marrom"></button>
             <button class="theme-btn" data-theme="theme-gray" style="background-color: #808080;" aria-label="Cinza"></button>
+
+            <!-- Metálicos -->
+            <button class="theme-btn" data-theme="theme-gold" style="background-color: #ffd700;" aria-label="Dourado"></button>
+            <button class="theme-btn" data-theme="theme-silver" style="background-color: #c0c0c0;" aria-label="Prata"></button>
+            <button class="theme-btn" data-theme="theme-bronze" style="background-color: #cd7f32;" aria-label="Bronze"></button>
+            <button class="theme-btn" data-theme="theme-copper" style="background-color: #b87333;" aria-label="Cobre"></button>
+            <button class="theme-btn" data-theme="theme-platinum" style="background-color: #e5e4e2;" aria-label="Platina"></button>
+            <button class="theme-btn" data-theme="theme-titanium" style="background-color: #878681;" aria-label="Titânio"></button>
+
+            <!-- Cores vibrantes -->
+            <button class="theme-btn" data-theme="theme-neon-green" style="background-color: #39ff14;" aria-label="Verde Neon"></button>
+            <button class="theme-btn" data-theme="theme-hot-pink" style="background-color: #ff1493;" aria-label="Rosa Vibrante"></button>
+            <button class="theme-btn" data-theme="theme-electric-purple" style="background-color: #bf00ff;" aria-label="Roxo Elétrico"></button>
+            <button class="theme-btn" data-theme="theme-neon-blue" style="background-color: #1e90ff;" aria-label="Azul Neon"></button>
+            <button class="theme-btn" data-theme="theme-magenta" style="background-color: #ff00ff;" aria-label="Magenta"></button>
+            <button class="theme-btn" data-theme="theme-cyan" style="background-color: #00ffff;" aria-label="Ciano"></button>
+
+            <!-- Cores pastéis -->
+            <button class="theme-btn" data-theme="theme-pastel-blue" style="background-color: #a7c7e7;" aria-label="Azul Pastel"></button>
+            <button class="theme-btn" data-theme="theme-pastel-pink" style="background-color: #f8c8dc;" aria-label="Rosa Pastel"></button>
+            <button class="theme-btn" data-theme="theme-pastel-green" style="background-color: #b5e7a0;" aria-label="Verde Pastel"></button>
+            <button class="theme-btn" data-theme="theme-pastel-yellow" style="background-color: #fdfd96;" aria-label="Amarelo Pastel"></button>
+            <button class="theme-btn" data-theme="theme-pastel-lavender" style="background-color: #d8b5e7;" aria-label="Lavanda Pastel"></button>
+
+            <!-- Cores terrosas e naturais -->
+            <button class="theme-btn" data-theme="theme-terra-cotta" style="background-color: #e2725b;" aria-label="Terracota"></button>
+            <button class="theme-btn" data-theme="theme-sage" style="background-color: #9caf88;" aria-label="Sálvia"></button>
+            <button class="theme-btn" data-theme="theme-moss" style="background-color: #8a9a5b;" aria-label="Musgo"></button>
+            <button class="theme-btn" data-theme="theme-sand" style="background-color: #d2b48c;" aria-label="Areia"></button>
+            <button class="theme-btn" data-theme="theme-slate" style="background-color: #708090;" aria-label="Ardósia"></button>
+
+            <!-- Temas de marcas -->
+            <button class="theme-btn" data-theme="theme-social-blue" style="background-color: #1877f2;" aria-label="Azul Social"></button>
+            <button class="theme-btn" data-theme="theme-social-red" style="background-color: #ff0000;" aria-label="Vermelho Social"></button>
+            <button class="theme-btn" data-theme="theme-eco-green" style="background-color: #00d084;" aria-label="Verde Ecológico"></button>
+            <button class="theme-btn" data-theme="theme-tech-dark" style="background-color: #333333;" aria-label="Preto Tech"></button>
+            <button class="theme-btn" data-theme="theme-streaming-red" style="background-color: #e50914;" aria-label="Vermelho Streaming"></button>
+
+            <!-- Temas gradientes (representados pela cor principal) -->
+            <button class="theme-btn" data-theme="theme-sunset" style="background-color: #ff7e5f;" aria-label="Pôr do Sol"></button>
+            <button class="theme-btn" data-theme="theme-ocean" style="background-color: #2193b0;" aria-label="Oceano"></button>
+            <button class="theme-btn" data-theme="theme-forest" style="background-color: #134e5e;" aria-label="Floresta"></button>
+            <button class="theme-btn" data-theme="theme-berry" style="background-color: #6f0000;" aria-label="Frutas Vermelhas"></button>
+            <button class="theme-btn" data-theme="theme-aurora" style="background-color: #00c9ff;" aria-label="Aurora"></button>
+
+            <!-- Temas conceituais -->
+            <button class="theme-btn" data-theme="theme-vintage" style="background-color: #d1b280;" aria-label="Vintage"></button>
+            <button class="theme-btn" data-theme="theme-cyberpunk" style="background-color: #f706cf;" aria-label="Cyberpunk"></button>
+            <button class="theme-btn" data-theme="theme-space" style="background-color: #3e1f47;" aria-label="Espaço"></button>
+            <button class="theme-btn" data-theme="theme-coffee" style="background-color: #65433c;" aria-label="Café"></button>
+            <button class="theme-btn" data-theme="theme-mint" style="background-color: #3eb489;" aria-label="Menta"></button>
+
+            <!-- Pedras preciosas -->
+            <button class="theme-btn" data-theme="theme-ruby" style="background-color: #e0115f;" aria-label="Rubi"></button>
+            <button class="theme-btn" data-theme="theme-emerald" style="background-color: #046307;" aria-label="Esmeralda"></button>
+            <button class="theme-btn" data-theme="theme-sapphire" style="background-color: #0f52ba;" aria-label="Safira"></button>
+            <button class="theme-btn" data-theme="theme-amethyst" style="background-color: #9966cc;" aria-label="Ametista"></button>
+            <button class="theme-btn" data-theme="theme-topaz" style="background-color: #ffc87c;" aria-label="Topázio"></button>
         </div>
     </div>
+
 </div>
 
 <style>
@@ -3088,133 +3152,388 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["background_image"]))
 
 
 
-        /* Tema ciano */
+    /* Temas originais */
+    .theme-cyan {
+        --primary: #00ffff;
+        --primary-light: #80ffff;
+        --primary-dark: #008080;
+        --bg-black-100: #000;
+        --text-black-700: #fff;
+        --secondary: #e0ffff;
+    }
 
-        .theme-cyan {
-            --primary: #00ffff;
-            --primary-light: #80ffff;
-            --primary-dark: #008080;
-            --bg-black-100: #000;
-            --text-black-700: #fff;
-            --secondary: #e0ffff;
-        }
+    .theme-black {
+        --primary: #000000;
+        --primary-light: #333333;
+        --primary-dark: #000000;
+        --secondary: #4d4d4d;
+    }
 
-        /* Tema preto */
+    .theme-gold {
+        --primary: #ffd700;
+        --primary-light: #ffe54d;
+        --primary-dark: #d7bf00;
+        --secondary: #fff5b3;
+    }
 
-        .theme-black {
-            --primary: #000000;
-            --primary-light: #333333;
-            --primary-dark: #000000;
-            --secondary: #4d4d4d;
-        }
+    .theme-silver {
+        --primary: #c0c0c0;
+        --primary-light: #d9d9d9;
+        --primary-dark: #8c8c8c;
+        --secondary: #f2f2f2;
+    }
 
-        /* Tema dourado */
+    .theme-red {
+        --primary: #ff4d4d;
+        --primary-light: #ff9999;
+        --primary-dark: #cc0000;
+        --secondary: #ffdddd;
+    }
 
-        .theme-gold {
-            --primary: #ffd700;
-            --primary-light: #ffe54d;
-            --primary-dark: #d7bf00;
-            --secondary: #fff5b3;
-        }
+    .theme-green {
+        --primary: #4dff4d;
+        --primary-light: #99ff99;
+        --primary-dark: #008000;
+        --secondary: #ddffdd;
+    }
 
-        /* Tema prata */
+    .theme-blue {
+        --primary: #4d4dff;
+        --primary-light: #9999ff;
+        --primary-dark: #000080;
+        --secondary: #ddddff;
+    }
 
-        .theme-silver {
-            --primary: #c0c0c0;
-            --primary-light: #d9d9d9;
-            --primary-dark: #8c8c8c;
-            --secondary: #f2f2f2;
-        }
+    .theme-yellow {
+        --primary: #ffff4d;
+        --primary-light: #ffff99;
+        --primary-dark: #ffcc00;
+        --secondary: #ffffcc;
+    }
 
-        /* Tema vermelho */
+    .theme-purple {
+        --primary: #8000ff;
+        --primary-light: #b366ff;
+        --primary-dark: #5900cc;
+        --secondary: #e6ccff;
+    }
 
-        .theme-red {
-            --primary: #ff4d4d;
-            --primary-light: #ff9999;
-            --primary-dark: #cc0000;
-            --secondary: #ffdddd;
-        }
+    .theme-pink {
+        --primary: #fd55ac;
+        --primary-light: #ffc0ff;
+        --primary-dark: #ff69b4;
+        --secondary: #ffd6e9;
+    }
 
-        /* Tema verde */
+    .theme-teal {
+        --primary: #008080;
+        --primary-light: #4cb3b3;
+        --primary-dark: #004d4d;
+        --secondary: #b3e6e6;
+    }
 
-        .theme-green {
-            --primary: #4dff4d;
-            --primary-light: #99ff99;
-            --primary-dark: #008000;
-            --secondary: #ddffdd;
-        }
+    .theme-orange {
+        --primary: #ffa500;
+        --primary-light: #ffcc80;
+        --primary-dark: #ff7700;
+        --secondary: #ffedcc;
+    }
 
-        /* Tema azul */
+    .theme-brown {
+        --primary: #8b4513;
+        --primary-light: #a36741;
+        --primary-dark: #59270e;
+        --secondary: #d2b89b;
+    }
 
-        .theme-blue {
-            --primary: #4d4dff;
-            --primary-light: #9999ff;
-            --primary-dark: #000080;
-            --secondary: #ddddff;
-        }
+    .theme-gray {
+        --primary: #808080;
+        --primary-light: #b3b3b3;
+        --primary-dark: #4d4d4d;
+        --secondary: #e6e6e6;
+    }
 
-        /* Tema amarelo */
+    /* Novas cores vibrantes */
+    .theme-neon-green {
+        --primary: #39ff14;
+        --primary-light: #85ff70;
+        --primary-dark: #00cc00;
+        --secondary: #d4ffcf;
+    }
 
-        .theme-yellow {
-            --primary: #ffff4d;
-            --primary-light: #ffff99;
-            --primary-dark: #ffcc00;
-            --secondary: #ffffcc;
-        }
+    .theme-hot-pink {
+        --primary: #ff1493;
+        --primary-light: #ff69b4;
+        --primary-dark: #c71585;
+        --secondary: #ffcce6;
+    }
 
-        /* Tema roxo */
+    .theme-electric-purple {
+        --primary: #bf00ff;
+        --primary-light: #d580ff;
+        --primary-dark: #8a00b8;
+        --secondary: #f0ccff;
+    }
 
-        .theme-purple {
-            --primary: #8000ff;
-            --primary-light: #b366ff;
-            --primary-dark: #5900cc;
-            --secondary: #e6ccff;
-        }
+    .theme-neon-blue {
+        --primary: #1e90ff;
+        --primary-light: #6cb8ff;
+        --primary-dark: #0066cc;
+        --secondary: #d1e8ff;
+    }
 
-        /* Tema rosa */
+    .theme-magenta {
+        --primary: #ff00ff;
+        --primary-light: #ff80ff;
+        --primary-dark: #cc00cc;
+        --secondary: #ffccff;
+    }
 
-        .theme-pink {
-            --primary: #fd55ac;
-            --primary-light: #ffc0ff;
-            --primary-dark: #ff69b4;
-            --secondary: #ffd6e9;
-        }
+    /* Cores pastéis */
+    .theme-pastel-blue {
+        --primary: #a7c7e7;
+        --primary-light: #d6e6f5;
+        --primary-dark: #6a9ac7;
+        --secondary: #e9f2fa;
+    }
 
-        /* Tema teal */
+    .theme-pastel-pink {
+        --primary: #f8c8dc;
+        --primary-light: #fce6ee;
+        --primary-dark: #e293b5;
+        --secondary: #fdf2f6;
+    }
 
-        .theme-teal {
-            --primary: #008080;
-            --primary-light: #4cb3b3;
-            --primary-dark: #004d4d;
-            --secondary: #b3e6e6;
-        }
+    .theme-pastel-green {
+        --primary: #b5e7a0;
+        --primary-light: #d8f2ce;
+        --primary-dark: #86cd6e;
+        --secondary: #ebf8e5;
+    }
 
-        /* Tema laranja */
+    .theme-pastel-yellow {
+        --primary: #fdfd96;
+        --primary-light: #fefecb;
+        --primary-dark: #f9f959;
+        --secondary: #fefefd;
+    }
 
-        .theme-orange {
-            --primary: #ffa500;
-            --primary-light: #ffcc80;
-            --primary-dark: #ff7700;
-            --secondary: #ffedcc;
-        }
+    .theme-pastel-lavender {
+        --primary: #d8b5e7;
+        --primary-light: #ecdcf5;
+        --primary-dark: #b586cd;
+        --secondary: #f5ebfa;
+    }
 
-        /* Tema marrom */
+    /* Cores terrosas e naturais */
+    .theme-terra-cotta {
+        --primary: #e2725b;
+        --primary-light: #eea08d;
+        --primary-dark: #c45240;
+        --secondary: #f7ddd5;
+    }
 
-        .theme-brown {
-            --primary: #8b4513;
-            --primary-light: #a36741;
-            --primary-dark: #59270e;
-            --secondary: #d2b89b;
-        }
+    .theme-sage {
+        --primary: #9caf88;
+        --primary-light: #c1cfb5;
+        --primary-dark: #778d63;
+        --secondary: #e6ebe0;
+    }
 
-        /* Tema cinza */
+    .theme-moss {
+        --primary: #8a9a5b;
+        --primary-light: #b0bd8e;
+        --primary-dark: #637346;
+        --secondary: #e5ead8;
+    }
 
-        .theme-gray {
-            --primary: #808080;
-            --primary-light: #b3b3b3;
-            --primary-dark: #4d4d4d;
-            --secondary: #e6e6e6;
-        }
+    .theme-sand {
+        --primary: #d2b48c;
+        --primary-light: #e5d3b3;
+        --primary-dark: #b39067;
+        --secondary: #f4ede1;
+    }
+
+    .theme-slate {
+        --primary: #708090;
+        --primary-light: #a4b0bc;
+        --primary-dark: #4c5866;
+        --secondary: #dce0e5;
+    }
+
+    /* Temas de marcas famosas */
+    .theme-social-blue {
+        --primary: #1877f2;
+        --primary-light: #619ef5;
+        --primary-dark: #0e5bbc;
+        --secondary: #e2ebfa;
+    }
+
+    .theme-social-red {
+        --primary: #ff0000;
+        --primary-light: #ff6666;
+        --primary-dark: #cc0000;
+        --secondary: #ffcccc;
+    }
+
+    .theme-eco-green {
+        --primary: #00d084;
+        --primary-light: #66e3b7;
+        --primary-dark: #00a368;
+        --secondary: #ccf5e6;
+    }
+
+    .theme-tech-dark {
+        --primary: #333333;
+        --primary-light: #666666;
+        --primary-dark: #000000;
+        --secondary: #bbbbbb;
+    }
+
+    .theme-streaming-red {
+        --primary: #e50914;
+        --primary-light: #f45762;
+        --primary-dark: #b20710;
+        --secondary: #fad3d6;
+    }
+
+    /* Temas gradientes */
+    .theme-sunset {
+        --primary: #ff7e5f;
+        --primary-light: #ffaf9f;
+        --primary-dark: #e35d4d;
+        --secondary: #feb692;
+    }
+
+    .theme-ocean {
+        --primary: #2193b0;
+        --primary-light: #6bc6d9;
+        --primary-dark: #186d84;
+        --secondary: #6dd5ed;
+    }
+
+    .theme-forest {
+        --primary: #134e5e;
+        --primary-light: #5c8d9a;
+        --primary-dark: #0c3945;
+        --secondary: #71b280;
+    }
+
+    .theme-berry {
+        --primary: #6f0000;
+        --primary-light: #a64d4d;
+        --primary-dark: #490000;
+        --secondary: #200122;
+    }
+
+    .theme-aurora {
+        --primary: #00c9ff;
+        --primary-light: #66deff;
+        --primary-dark: #0098c0;
+        --secondary: #92fe9d;
+    }
+
+    /* Temas conceituais */
+    .theme-vintage {
+        --primary: #d1b280;
+        --primary-light: #e2cdaa;
+        --primary-dark: #a89066;
+        --secondary: #f0e6d5;
+    }
+
+    .theme-cyberpunk {
+        --primary: #f706cf;
+        --primary-light: #fa62dd;
+        --primary-dark: #c405a5;
+        --secondary: #04e1fc;
+    }
+
+    .theme-space {
+        --primary: #3e1f47;
+        --primary-light: #7c5d87;
+        --primary-dark: #29142f;
+        --secondary: #4b257c;
+    }
+
+    .theme-coffee {
+        --primary: #65433c;
+        --primary-light: #926c64;
+        --primary-dark: #462e29;
+        --secondary: #c0a392;
+    }
+
+    .theme-mint {
+        --primary: #3eb489;
+        --primary-light: #7dcab0;
+        --primary-dark: #2a8c69;
+        --secondary: #c3e8d7;
+    }
+
+    /* Cores metálicas */
+    .theme-bronze {
+        --primary: #cd7f32;
+        --primary-light: #dba570;
+        --primary-dark: #9c5e26;
+        --secondary: #f0d4bc;
+    }
+
+    .theme-copper {
+        --primary: #b87333;
+        --primary-light: #d49e70;
+        --primary-dark: #9a5526;
+        --secondary: #f1d9c5;
+    }
+
+    .theme-platinum {
+        --primary: #e5e4e2;
+        --primary-light: #f0efee;
+        --primary-dark: #b8b8b5;
+        --secondary: #f8f8f7;
+    }
+
+    .theme-titanium {
+        --primary: #878681;
+        --primary-light: #b0afab;
+        --primary-dark: #5e5d5a;
+        --secondary: #dbdad8;
+    }
+
+    /* Cores de pedras preciosas */
+    .theme-ruby {
+        --primary: #e0115f;
+        --primary-light: #eb6097;
+        --primary-dark: #b00d4a;
+        --secondary: #f7d1e0;
+    }
+
+    .theme-emerald {
+        --primary: #046307;
+        --primary-light: #3e8e41;
+        --primary-dark: #023d04;
+        --secondary: #a7e8a9;
+    }
+
+    .theme-sapphire {
+        --primary: #0f52ba;
+        --primary-light: #5382d2;
+        --primary-dark: #093b85;
+        --secondary: #d1ddf1;
+    }
+
+    .theme-amethyst {
+        --primary: #9966cc;
+        --primary-light: #b799dd;
+        --primary-dark: #7744aa;
+        --secondary: #e6d9f2;
+    }
+
+    .theme-topaz {
+        --primary: #ffc87c;
+        --primary-light: #ffdba9;
+        --primary-dark: #ffb74d;
+        --secondary: #fff0db;
+    }
+
 
 
 
@@ -3292,6 +3611,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["background_image"]))
 </style>
 
 <script>
+
+
+
     document.addEventListener('DOMContentLoaded', function() {
         const styleSwitcher = document.querySelector('.style-switcher');
         const styleSwitcherToggler = document.querySelector('.style-switcher-toggler');
