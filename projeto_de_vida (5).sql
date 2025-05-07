@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 30/04/2025 às 20:50
+-- Tempo de geração: 07/05/2025 às 20:46
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -135,16 +135,25 @@ CREATE TABLE `quem_sou_eu` (
   `visao_dos_familiares` text DEFAULT NULL,
   `visao_dos_professores` text DEFAULT NULL,
   `autovalorizacao_total` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Despejando dados para a tabela `quem_sou_eu`
 --
 
-INSERT INTO `quem_sou_eu` (`id`, `user_id`, `fale_sobre_voce`, `minhas_lembrancas`, `pontos_fortes`, `pontos_fracos`, `meus_valores`, `principais_aptidoes`, `relacoes_familia`, `relacoes_amigos`, `relacoes_escola`, `relacoes_sociedade`, `gosto_fazer`, `nao_gosto_fazer`, `rotina`, `lazer`, `estudos`, `vida_escolar`, `visao_fisica`, `visao_intelectual`, `visao_emocional`, `visao_dos_amigos`, `visao_dos_familiares`, `visao_dos_professores`, `autovalorizacao_total`, `created_at`) VALUES
-(6, 8, 'safcsafcds', '', 'fsdafdsfsdaf', '', '', 'resolução de problemas, pensamento crítico', 'wqewqe', 'ewqrwerqqwerweqr', 'erwqrewqr', 'rwqerweqrwe', '', '', '', '', '', '', '', '', '', '', '', '', 8, '2025-04-11 10:28:22'),
-(7, 4, 'sou lindo', 'poucas', 'legal', 'canseira', '3000000', 'rapido,organizado', 'pouca', 'menos ainda', 'me matando', 'legal', 'ficar no pc', 'acordar cedo', 'enrolada', 'ficar no pc ', 'bastante', 'enrolada', 'gordo', 'cansado', 'de boa', 'sou legal', 'irritante', 'nem sei', 70, '2025-04-16 13:46:58');
+INSERT INTO `quem_sou_eu` (`id`, `user_id`, `fale_sobre_voce`, `minhas_lembrancas`, `pontos_fortes`, `pontos_fracos`, `meus_valores`, `principais_aptidoes`, `relacoes_familia`, `relacoes_amigos`, `relacoes_escola`, `relacoes_sociedade`, `gosto_fazer`, `nao_gosto_fazer`, `rotina`, `lazer`, `estudos`, `vida_escolar`, `visao_fisica`, `visao_intelectual`, `visao_emocional`, `visao_dos_amigos`, `visao_dos_familiares`, `visao_dos_professores`, `autovalorizacao_total`, `created_at`, `updated_at`) VALUES
+(6, 8, 'safcsafcds', '', 'fsdafdsfsdaf', '', '', 'resolução de problemas, pensamento crítico', 'wqewqe', 'ewqrwerqqwerweqr', 'erwqrewqr', 'rwqerweqrwe', '', '', '', '', '', '', '', '', '', '', '', '', 8, '2025-04-11 10:28:22', '2025-05-07 11:20:49'),
+(7, 4, 'sou lindo', 'poucas', 'legal', 'canseira', '3000000', 'rapido,organizado', 'pouca', 'menos ainda', 'me matando', 'legal', 'ficar no pc', 'acordar cedo', 'enrolada', 'ficar no pc ', 'bastante', 'enrolada', 'gordo', 'cansado', 'de boa', 'sou legal', 'irritante', 'nem sei', 70, '2025-04-16 13:46:58', '2025-05-07 11:20:49');
+
+--
+-- Acionadores `quem_sou_eu`
+--
+DELIMITER $$
+CREATE TRIGGER `atualiza_quem_sou_eu` BEFORE UPDATE ON `quem_sou_eu` FOR EACH ROW SET NEW.updated_at = CURRENT_TIMESTAMP
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -183,25 +192,28 @@ CREATE TABLE `users` (
   `description` text DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `data_de_registro` datetime NOT NULL,
-  `profile_picture` varchar(255) DEFAULT NULL
+  `profile_picture` varchar(255) DEFAULT NULL,
+  `theme_color` varchar(50) DEFAULT 'theme-base',
+  `background_image` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Despejando dados para a tabela `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `email`, `description`, `password`, `data_de_registro`, `profile_picture`) VALUES
-(4, 'jonata', 'jonatas@docente.br', 'meu Deus, meu senhor me ajuda por favor!', '$2y$10$8Nv0DHAotlQ4VUcZm.VK8evTCkFnZrR/lvjDAgoFJmJE7zveFpxy6', '2025-03-28 14:54:10', 'img/67ed0fc589c6d_7ugE.gif'),
-(5, 'bernini', 'bernini@bernini.com', 'sor bernas senai', '1234', '2025-03-28 18:29:22', 'img/67e6e878e2c5b_OKUa.gif'),
-(6, 'Rafa', 'rafael@gmail.com', '', '1234', '2025-03-28 19:33:54', 'img/67e6ebc794cf4_XGrF.gif'),
-(7, 'roberto', 'robertohenryck365@gmail.com', 'afawdawdaw', '$2y$10$RCA01/hwl9Vi.ZjRl/FjQ.k0Rj/4TaN/cHrxdSDHar/Mw6hkpBPvW', '2025-04-02 18:42:02', 'img/67ed691da037b_OKUa.gif'),
-(8, 'Eric', 'ericsouzapalma123@gmail.com', 'oi meu nome é Eric e este é o meu projeto de vida', '$2y$10$alK5Xk0uZvt9Ys/zT5pLm.45soOKN6bfxyT0QXjNII2VJ9vu4c/7G', '2025-04-02 19:20:11', 'img/68126724750e1_XGrF.gif'),
-(9, 'marim', 'marim@gmail.com', NULL, '555', '2025-04-04 17:56:25', NULL),
-(10, 'Davi', 'Davi@gmail.com', NULL, '$2y$10$YCKu6bPEhnWbc4Na2rh16.lCoKrkyDDpcfbn6OI3a9NXOXonEvO4m', '2025-04-04 18:10:35', NULL),
-(11, 'catarina', 'catarina@gmail.com', NULL, '$2y$10$17hkY1Z1cobIV1fpEFP4quB3aMpL.hxNIse//ct5mNu5N4txLpzl2', '2025-04-04 18:12:23', NULL),
-(12, 'jonatas', 'jonatas.goncalves@sp.senai.br', 'professor do tecnico de desenvolvimento de sistemas', '$2y$10$ioo5KdmxZPy/L4cTdJlJr.wggppupiqiA.UelnrS953BnEqKbK5DK', '2025-04-09 15:56:21', 'img/67f6874466791_7ugE.gif'),
-(13, 'qrtyuiop', 'teste1@gmail.com', NULL, '$2y$10$HUsAX7IDH1dyIgE1xePsy.ZPfhCRoIC1xpyJQs1GDikH1L/1U2LiO', '2025-04-25 20:49:09', NULL),
-(14, 'Joao', 'thiago@gmail.com', NULL, '$2y$10$vCK5VoVzoQ0dy0nTJcrOj.3SwpWF2mpWKUvCFZXnDvc1D5uEQRuSq', '2025-04-30 14:41:44', 'img/68121ad00e935_82486265.jfif');
+INSERT INTO `users` (`id`, `username`, `email`, `description`, `password`, `data_de_registro`, `profile_picture`, `theme_color`, `background_image`) VALUES
+(4, 'jonata', 'jonatas@docente.br', 'meu Deus, meu senhor me ajuda por favor!', '$2y$10$8Nv0DHAotlQ4VUcZm.VK8evTCkFnZrR/lvjDAgoFJmJE7zveFpxy6', '2025-03-28 14:54:10', 'img/67ed0fc589c6d_7ugE.gif', 'theme-base', NULL),
+(5, 'bernini', 'bernini@bernini.com', 'sor bernas senai', '1234', '2025-03-28 18:29:22', 'img/67e6e878e2c5b_OKUa.gif', 'theme-base', NULL),
+(6, 'Rafa', 'rafael@gmail.com', '', '1234', '2025-03-28 19:33:54', 'img/67e6ebc794cf4_XGrF.gif', 'theme-base', NULL),
+(7, 'roberto', 'robertohenryck365@gmail.com', 'afawdawdaw', '$2y$10$RCA01/hwl9Vi.ZjRl/FjQ.k0Rj/4TaN/cHrxdSDHar/Mw6hkpBPvW', '2025-04-02 18:42:02', 'img/67ed691da037b_OKUa.gif', 'theme-base', NULL),
+(8, 'Eric', 'ericsouzapalma123@gmail.com', 'oi meu nome é Eric e este é o meu projeto de vida', '$2y$10$alK5Xk0uZvt9Ys/zT5pLm.45soOKN6bfxyT0QXjNII2VJ9vu4c/7G', '2025-04-02 19:20:11', 'img/681b870ba1891_49edb7c66442d7362f7811eab9d974fc.jpg', 'theme-red', 'img/banner_681b86fc0373e.jpg'),
+(9, 'marim', 'marim@gmail.com', NULL, '555', '2025-04-04 17:56:25', NULL, 'theme-base', NULL),
+(10, 'Davi', 'Davi@gmail.com', NULL, '$2y$10$YCKu6bPEhnWbc4Na2rh16.lCoKrkyDDpcfbn6OI3a9NXOXonEvO4m', '2025-04-04 18:10:35', NULL, 'theme-base', NULL),
+(11, 'catarina', 'catarina@gmail.com', NULL, '$2y$10$17hkY1Z1cobIV1fpEFP4quB3aMpL.hxNIse//ct5mNu5N4txLpzl2', '2025-04-04 18:12:23', NULL, 'theme-base', NULL),
+(12, 'jonatas', 'jonatas.goncalves@sp.senai.br', 'professor do tecnico de desenvolvimento de sistemas', '$2y$10$ioo5KdmxZPy/L4cTdJlJr.wggppupiqiA.UelnrS953BnEqKbK5DK', '2025-04-09 15:56:21', 'img/67f6874466791_7ugE.gif', 'theme-base', NULL),
+(13, 'qrtyuiop', 'teste1@gmail.com', NULL, '$2y$10$HUsAX7IDH1dyIgE1xePsy.ZPfhCRoIC1xpyJQs1GDikH1L/1U2LiO', '2025-04-25 20:49:09', NULL, 'theme-base', NULL),
+(14, 'Joao', 'thiago@gmail.com', NULL, '$2y$10$vCK5VoVzoQ0dy0nTJcrOj.3SwpWF2mpWKUvCFZXnDvc1D5uEQRuSq', '2025-04-30 14:41:44', 'img/68121ad00e935_82486265.jfif', 'theme-base', NULL),
+(15, 'Erictest', 'erictest@gmail.com', NULL, '$2y$10$hwGxdjzaHv5uUyuAshEyhuiZoU7XDbx2UFPNh9vtMLhS9a/dcSvWq', '2025-05-07 17:57:19', 'img/681b82fea280f_82486265.jfif', 'theme-yellow', 'img/banner_681b914e553e7.jpg');
 
 --
 -- Índices para tabelas despejadas
@@ -279,7 +291,7 @@ ALTER TABLE `quem_sou_eu`
 -- AUTO_INCREMENT de tabela `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Restrições para tabelas despejadas
@@ -301,7 +313,7 @@ ALTER TABLE `plano_acao`
 -- Restrições para tabelas `quem_sou_eu`
 --
 ALTER TABLE `quem_sou_eu`
-  ADD CONSTRAINT `quem_sou_eu_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+  ADD CONSTRAINT `fk_quem_sou_eu_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `teste_personalidade`
