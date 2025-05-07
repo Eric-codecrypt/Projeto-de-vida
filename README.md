@@ -1,6 +1,6 @@
 # Figma
 
-Este é meu Figma do meu [Projeto de vida](https://link.figma/Projeto%20de%20vida)!  
+Este é o Figma do meu [Projeto de vida](https://link.figma/Projeto%20de%20vida)!  
 
 
 # Aviso: Login com Google em Manutenção
