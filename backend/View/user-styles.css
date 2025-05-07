@@ -32,7 +32,6 @@
   padding: 0 1rem;
 }
 
-/* Header do perfil */
 .perfil-header {
   display: flex;
   flex-direction: column;
@@ -43,14 +42,109 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   margin-bottom: 2rem;
+  position: relative;
+
+  /* Dimensões específicas */
+  width: 100%;
+  max-width: 1168px;
+  min-height: 347.17px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
+/* Adiciona o banner como um background absoluto */
+.perfil-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url(''); /* Será substituído pelo inline style no HTML */
+  background-size: cover;
+  background-position: center;
+  opacity: 1;
+  border-radius: var(--radius);
+  z-index: 0;
+}
+
+/* Adiciona um overlay para garantir legibilidade do texto */
+.perfil-header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.5));
+  border-radius: var(--radius);
+  z-index: 1;
+}
+
+/* Assegurar que o conteúdo fique acima do overlay */
+.perfil-header > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Mantém a responsividade original */
 @media (min-width: 768px) {
   .perfil-header {
     flex-direction: row;
     text-align: left;
+    justify-content: space-between;
   }
 }
+
+/* Ajustes para melhorar a legibilidade */
+.perfil-nome, .perfil-email {
+  color: white;
+  text-shadow: 0px 1px 3px rgba(0,0,0,0.6);
+}
+
+.perfil-bio {
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Botões mais visíveis contra o fundo */
+.perfil-acoes .btn {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+
+/* Estilos para o modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 10% auto;
+  padding: 20px;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 8px;
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+
 
 .perfil-foto {
   position: relative;
@@ -112,7 +206,10 @@
   border-radius: var(--radius);
   margin-top: 1rem;
   color: var(--gray-700);
+
 }
+
+
 
 .perfil-acoes {
   display: flex;
@@ -294,6 +391,44 @@
   background-color: var(--gray-100);
   border-color: var(--gray-400);
 }
+
+.btn-terciario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem; /* Espaçamento entre ícone e texto */
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+  padding: 0.75rem 1.25rem; /* Tamanho maior do botão */
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease; /* Animação suave ao passar o mouse */
+}
+
+.btn-terciario i {
+    font-size: 1.5rem; /* Tamanho do ícone ajustado */
+    color: var(--primary-dark); /* Cor do ícone */
+  }
+
+
+
+.btn-terciario:hover {
+  background-color: var(--primary-light); /* Fundo no hover */
+  color: var(--primary-dark);
+  border-color: var(--primary); /* Mudança dinâmica na borda */
+  transform: translateY(-2px); /* Elevação ao passar o mouse */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Sombra ao passar o mouse */
+}
+
+.btn-terciario:active {
+  transform: translateY(0); /* Efeito de clique */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
 
 .btn-sucesso {
   background-color: var(--success);
@@ -484,3 +619,7 @@
 .gap-2 { gap: 0.5rem; }
 .gap-3 { gap: 1rem; }
 .gap-4 { gap: 1.5rem; }
+
+
+
+

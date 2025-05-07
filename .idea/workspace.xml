@@ -6,9 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="8b91091e-6319-4979-8573-7429aedbc059" name="Changes" comment="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/landing.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/landing.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/View/login.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/login.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Alerta e documentação.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Alerta e documentação.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/View/dark-mode.css" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/dark-mode.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/View/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/register.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/View/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/script.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/View/user-styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/user-styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/View/user.php" beforeDir="false" afterPath="$PROJECT_DIR$/backend/View/user.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,7 +42,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/Eric-codecrypt/Projeto-de-vida.git&quot;,
-    &quot;accountId&quot;: &quot;19507146-d8da-4810-8df3-bb201856b6da&quot;
+    &quot;accountId&quot;: &quot;db3bb088-a0da-4389-81ec-3a71de73cd2e&quot;
   }
 }</component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../php/php.exe" />
@@ -57,22 +61,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Turma2/xampp/htdocs/Projeto-de-vida",
+    "list.type.of.created.stylesheet": "CSS",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Turma2\xampp\htdocs\Projeto-de-vida\backend\View" />
@@ -81,8 +86,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-PS-251.23774.466" />
-        <option value="bundled-php-predefined-a98d8de5180a-aaeaa8632555-com.jetbrains.php.sharedIndexes-PS-251.23774.466" />
+        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-PS-251.23774.436" />
+        <option value="bundled-php-predefined-a98d8de5180a-aaeaa8632555-com.jetbrains.php.sharedIndexes-PS-251.23774.436" />
       </set>
     </attachedChunks>
   </component>
@@ -99,6 +104,8 @@
       <workItem from="1746040507966" duration="16515000" />
       <workItem from="1746133871093" duration="7597000" />
       <workItem from="1746387514446" duration="8526000" />
+      <workItem from="1746616215112" duration="29000" />
+      <workItem from="1746616250812" duration="14505000" />
     </task>
     <task id="LOCAL-00001" summary="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
       <option name="closed" value="true" />

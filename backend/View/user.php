@@ -522,6 +522,115 @@ if (isset($_GET['view_landing'])) {
     }
 }
 
+// Adicione este código na seção onde você processa os formulários POST
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["background_image"])) {
+    $file = $_FILES["background_image"];
+    $uploadDir = __DIR__ . "/img/";
+
+    // Dimensões desejadas
+    $targetWidth = 1168;
+    $targetHeight = 347.17;
+
+    if ($file["error"] !== 0) {
+        // Adicionar mensagem de erro específica baseada no código de erro
+        $errorMessages = [
+            1 => "O arquivo excede o tamanho máximo permitido pelo servidor.",
+            2 => "O arquivo excede o tamanho máximo permitido pelo formulário.",
+            3 => "O upload do arquivo foi feito parcialmente.",
+            4 => "Nenhum arquivo foi enviado.",
+            6 => "Pasta temporária ausente.",
+            7 => "Falha ao escrever arquivo no disco.",
+            8 => "Uma extensão PHP interrompeu o upload do arquivo."
+        ];
+        $_SESSION['upload_error'] = $errorMessages[$file["error"]] ?? "Erro desconhecido no upload do banner.";
+    } else {
+        $allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp", "image/x-icon", "image/vnd.microsoft.icon", "image/gif"];
+        $fileType = mime_content_type($file["tmp_name"]);
+
+        if (in_array($fileType, $allowedTypes)) {
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $fileName = "banner_" . uniqid() . ".jpg"; // Sempre salvar como JPG
+            $filePath = "img/" . $fileName;
+            $fullPath = $uploadDir . $fileName;
+
+            // Redimensionar a imagem para as dimensões corretas
+            if (function_exists('imagecreatefromstring')) {
+                // Criar imagem a partir do arquivo enviado
+                $sourceImage = imagecreatefromstring(file_get_contents($file["tmp_name"]));
+
+                if ($sourceImage !== false) {
+                    // Criar imagem de destino com as dimensões corretas
+                    $targetImage = imagecreatetruecolor($targetWidth, round($targetHeight));
+
+                    // Preservar transparência para PNG
+                    if ($fileType == 'image/png') {
+                        imagealphablending($targetImage, false);
+                        imagesavealpha($targetImage, true);
+                        $transparent = imagecolorallocatealpha($targetImage, 255, 255, 255, 127);
+                        imagefilledrectangle($targetImage, 0, 0, $targetWidth, round($targetHeight), $transparent);
+                    }
+
+                    // Redimensionar
+                    imagecopyresampled(
+                        $targetImage,
+                        $sourceImage,
+                        0, 0, 0, 0,
+                        $targetWidth,
+                        round($targetHeight),
+                        imagesx($sourceImage),
+                        imagesy($sourceImage)
+                    );
+
+                    // Salvar imagem
+                    switch ($fileType) {
+                        case 'image/jpeg':
+                            imagejpeg($targetImage, $fullPath, 90);
+                            break;
+                        case 'image/png':
+                            imagepng($targetImage, $fullPath);
+                            break;
+                        case 'image/gif':
+                            imagegif($targetImage, $fullPath);
+                            break;
+                        case 'image/webp':
+                            imagewebp($targetImage, $fullPath, 90);
+                            break;
+                        default:
+                            imagejpeg($targetImage, $fullPath, 90);
+                    }
+
+                    // Liberar memória
+                    imagedestroy($sourceImage);
+                    imagedestroy($targetImage);
+
+                    // Atualizar banco de dados
+                    $stmt = $pdo->prepare("UPDATE users SET background_image = ? WHERE id = ?");
+                    $stmt->execute([$filePath, $user_id]);
+                    $_SESSION['success_message'] = "Banner atualizado com sucesso!";
+                } else {
+                    $_SESSION['upload_error'] = "Não foi possível processar a imagem enviada.";
+                }
+            } else {
+                // Se a GD não estiver disponível, apenas mova o arquivo
+                if (move_uploaded_file($file["tmp_name"], $fullPath)) {
+                    $stmt = $pdo->prepare("UPDATE users SET background_image = ? WHERE id = ?");
+                    $stmt->execute([$filePath, $user_id]);
+                    $_SESSION['success_message'] = "Banner atualizado com sucesso! (nota: a imagem não foi redimensionada)";
+                } else {
+                    $_SESSION['upload_error'] = "Falha ao mover o arquivo enviado.";
+                }
+            }
+        } else {
+            $_SESSION['upload_error'] = "Formato de arquivo não permitido. Por favor, envie uma imagem JPG, PNG, GIF ou WebP.";
+        }
+    }
+    header("Location: user.php");
+    exit();
+}
+
 
 
 ?>
@@ -609,7 +718,7 @@ if (isset($_GET['view_landing'])) {
 
         /* Transição suave ao rolar */
         .navbar-scrolled {
-            background-color: white !important;
+            background-color: black !important;
             box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15) !important;
         }
 
@@ -732,7 +841,7 @@ if (isset($_GET['view_landing'])) {
 </head>
 <body>
 <main class="perfil-container animate-fadeIn">
-    <section class="perfil-header">
+    <section class="perfil-header" data-background="<?php echo $user['background_image'] ?? 'img/default-banner.jpg'; ?>">
         <div class="perfil-foto">
             <img src="<?php echo $profilePicture; ?>" alt="Foto de perfil">
             <label for="file-upload" class="editar-foto">
@@ -760,9 +869,28 @@ if (isset($_GET['view_landing'])) {
                 <button class="btn btn-secundario" data-modal="editar-bio">
                     <i class="fas fa-edit"></i> Editar Bio
                 </button>
+                <button class="btn-terciario" data-modal="mudar-banner">
+                    <i class="fas fa-image"></i> Mudar Banner
+                </button>
             </div>
         </div>
     </section>
+
+
+    <script>
+        // Aplica a imagem de fundo ao perfil-header
+        document.addEventListener('DOMContentLoaded', function() {
+            const perfilHeader = document.querySelector('.perfil-header');
+            if (perfilHeader) {
+                const backgroundImage = perfilHeader.getAttribute('data-background');
+                if (backgroundImage) {
+                    perfilHeader.style.setProperty('--background-image', `url('${backgroundImage}')`);
+                    perfilHeader.style.backgroundImage = `url('${backgroundImage}')`;
+                }
+            }
+        });
+
+    </script>
 
     <div class="perfil-tabs">
         <button class="perfil-tab active" data-tab="resumo">Resumo</button>
@@ -2278,6 +2406,64 @@ if (isset($_GET['view_landing'])) {
     </div>
 </div>
 
+<div id="mudar-banner-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Mudar Imagem de Fundo</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-grupo">
+                <label for="background_image" class="form-label">Selecione uma nova imagem de fundo</label>
+                <input type="file" id="background_image" name="background_image" class="form-input" accept="image/*">
+                <p class="text-small mt-2">Dimensões recomendadas: 1168 x 347.17 pixels</p>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" class="btn btn-secundario close-modal">Cancelar</button>
+                <button type="submit" class="btn btn-primario">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    // Funções para manipulação de modais
+    document.addEventListener('DOMContentLoaded', function() {
+        // Seleciona todos os botões que abrem modais
+        const modalButtons = document.querySelectorAll('[data-modal]');
+        const closeButtons = document.querySelectorAll('.close-button, .close-modal');
+
+        // Adiciona listener para abrir o modal correspondente
+        modalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const modalId = button.getAttribute('data-modal');
+                const modal = document.getElementById(`${modalId}-modal`);
+                if (modal) {
+                    modal.style.display = 'block';
+                }
+            });
+        });
+
+        // Adiciona listener para fechar modais
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const modal = button.closest('.modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // Fecha o modal quando clicar fora dele
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        });
+    });
+
+</script>
+
+
 <div class="modal" id="adicionar-meta">
     <div class="modal-conteudo">
         <div class="modal-cabecalho">
@@ -2898,104 +3084,139 @@ if (isset($_GET['view_landing'])) {
         --text-black-700: #333;
     }
 
-    /* Tema ciano */
-    .theme-cyan {
-        --primary: #00ffff;
-        --primary-light: #80ffff;
-        --secondary: #e0ffff;
-    }
 
-    /* Tema preto */
-    .theme-black {
-        --primary: #000000;
-        --primary-light: #333333;
-        --secondary: #4d4d4d;
-    }
 
-    /* Tema dourado */
-    .theme-gold {
-        --primary: #ffd700;
-        --primary-light: #ffe54d;
-        --secondary: #fff5b3;
-    }
 
-    /* Tema prata */
-    .theme-silver {
-        --primary: #c0c0c0;
-        --primary-light: #d9d9d9;
-        --secondary: #f2f2f2;
-    }
 
-    /* Tema vermelho */
-    .theme-red {
-        --primary: #ff4d4d;
-        --primary-light: #ff9999;
-        --secondary: #ffdddd;
-    }
+        /* Tema ciano */
 
-    /* Tema verde */
-    .theme-green {
-        --primary: #4dff4d;
-        --primary-light: #99ff99;
+        .theme-cyan {
+            --primary: #00ffff;
+            --primary-light: #80ffff;
+            --primary-dark: #008080;
+            --bg-black-100: #000;
+            --text-black-700: #fff;
+            --secondary: #e0ffff;
+        }
 
-        --secondary: #ddffdd;
-    }
+        /* Tema preto */
 
-    /* Tema azul */
-    .theme-blue {
-        --primary: #4d4dff;
-        --primary-light: #9999ff;
-        --secondary: #ddddff;
-    }
+        .theme-black {
+            --primary: #000000;
+            --primary-light: #333333;
+            --primary-dark: #000000;
+            --secondary: #4d4d4d;
+        }
 
-    /* Tema amarelo */
-    .theme-yellow {
-        --primary: #ffff4d;
-        --primary-light: #ffff99;
-        --secondary: #ffffcc;
-    }
+        /* Tema dourado */
 
-    /* Tema roxo */
-    .theme-purple {
-        --primary: #8000ff;
-        --primary-light: #b366ff;
-        --secondary: #e6ccff;
-    }
+        .theme-gold {
+            --primary: #ffd700;
+            --primary-light: #ffe54d;
+            --primary-dark: #d7bf00;
+            --secondary: #fff5b3;
+        }
 
-    /* Tema rosa */
-    .theme-pink {
-        --primary: #fd55ac;
-        --primary-light: #ffc0ff;
-        --secondary: #ffd6e9;
-    }
+        /* Tema prata */
 
-    /* Tema teal */
-    .theme-teal {
-        --primary: #008080;
-        --primary-light: #4cb3b3;
-        --secondary: #b3e6e6;
-    }
+        .theme-silver {
+            --primary: #c0c0c0;
+            --primary-light: #d9d9d9;
+            --primary-dark: #8c8c8c;
+            --secondary: #f2f2f2;
+        }
 
-    /* Tema laranja */
-    .theme-orange {
-        --primary: #ffa500;
-        --primary-light: #ffcc80;
-        --secondary: #ffedcc;
-    }
+        /* Tema vermelho */
 
-    /* Tema marrom */
-    .theme-brown {
-        --primary: #8b4513;
-        --primary-light: #a36741;
-        --secondary: #d2b89b;
-    }
+        .theme-red {
+            --primary: #ff4d4d;
+            --primary-light: #ff9999;
+            --primary-dark: #cc0000;
+            --secondary: #ffdddd;
+        }
 
-    /* Tema cinza */
-    .theme-gray {
-        --primary: #808080;
-        --primary-light: #b3b3b3;
-        --secondary: #e6e6e6;
-    }
+        /* Tema verde */
+
+        .theme-green {
+            --primary: #4dff4d;
+            --primary-light: #99ff99;
+            --primary-dark: #008000;
+            --secondary: #ddffdd;
+        }
+
+        /* Tema azul */
+
+        .theme-blue {
+            --primary: #4d4dff;
+            --primary-light: #9999ff;
+            --primary-dark: #000080;
+            --secondary: #ddddff;
+        }
+
+        /* Tema amarelo */
+
+        .theme-yellow {
+            --primary: #ffff4d;
+            --primary-light: #ffff99;
+            --primary-dark: #ffcc00;
+            --secondary: #ffffcc;
+        }
+
+        /* Tema roxo */
+
+        .theme-purple {
+            --primary: #8000ff;
+            --primary-light: #b366ff;
+            --primary-dark: #5900cc;
+            --secondary: #e6ccff;
+        }
+
+        /* Tema rosa */
+
+        .theme-pink {
+            --primary: #fd55ac;
+            --primary-light: #ffc0ff;
+            --primary-dark: #ff69b4;
+            --secondary: #ffd6e9;
+        }
+
+        /* Tema teal */
+
+        .theme-teal {
+            --primary: #008080;
+            --primary-light: #4cb3b3;
+            --primary-dark: #004d4d;
+            --secondary: #b3e6e6;
+        }
+
+        /* Tema laranja */
+
+        .theme-orange {
+            --primary: #ffa500;
+            --primary-light: #ffcc80;
+            --primary-dark: #ff7700;
+            --secondary: #ffedcc;
+        }
+
+        /* Tema marrom */
+
+        .theme-brown {
+            --primary: #8b4513;
+            --primary-light: #a36741;
+            --primary-dark: #59270e;
+            --secondary: #d2b89b;
+        }
+
+        /* Tema cinza */
+
+        .theme-gray {
+            --primary: #808080;
+            --primary-light: #b3b3b3;
+            --primary-dark: #4d4d4d;
+            --secondary: #e6e6e6;
+        }
+
+
 
     /* Aplicação das cores às classes */
     #navbar .logo span {

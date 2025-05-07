@@ -1,6 +1,6 @@
 <?php
-include_once  'C:/xampp/htdocs/Projeto-de-vida/backend/Controller/UserController.php';
-include_once 'C:/xampp/htdocs/Projeto-de-vida/config.php';
+include_once  'C:/Turma2/xampp/htdocs/Projeto-de-vida/backend/Controller/UserController.php';
+include_once 'C:/Turma2/xampp/htdocs/Projeto-de-vida/config.php';
 
 $Controller = new UserController($pdo);
 

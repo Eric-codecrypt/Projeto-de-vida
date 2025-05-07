@@ -183,3 +183,48 @@ const observer = new IntersectionObserver((entries) => {
 document.querySelectorAll('section').forEach(section => {
     observer.observe(section);
 });
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const bannerInput = document.getElementById('banner_image');
+    const previewContainer = document.getElementById('banner-preview-container');
+    const preview = document.getElementById('banner-preview');
+
+    if (bannerInput) {
+        bannerInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                };
+
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    // Código para abrir o modal de banner (se já não existir no seu script)
+    const bannerModalBtn = document.querySelector('[data-modal="mudar-banner"]');
+    const bannerModal = document.getElementById('modal-mudar-banner');
+
+    if (bannerModalBtn && bannerModal) {
+        bannerModalBtn.addEventListener('click', function() {
+            bannerModal.style.display = 'block';
+        });
+    }
+
+    // Fechar modais (se já não existir no seu script)
+    const closeButtons = document.querySelectorAll('[data-close-modal]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+});
+
+
