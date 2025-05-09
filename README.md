@@ -1,6 +1,7 @@
 # Figma
 
-Este é o Figma do meu [![Abrir no Figma](https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg)](https://www.figma.com/design/gHGX7tGty8VM8reyGkj96e/Untitled?node-id=1-317&embed-host=share)!  
+Este é o Figma do meu [🔗 Veja o protótipo no Figma](https://www.figma.com/design/gHGX7tGty8VM8reyGkj96e/Untitled?node-id=1-317&embed-host=share)
+!  
 
 
 # Aviso: Login com Google em Manutenção
