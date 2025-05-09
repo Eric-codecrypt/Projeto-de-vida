@@ -1,6 +1,6 @@
 # Figma
 
-Este é o Figma do meu [🔗 Veja o protótipo no Figma](https://www.figma.com/design/gHGX7tGty8VM8reyGkj96e/Untitled?node-id=1-317&embed-host=share)
+ [🔗 Veja o protótipo no Figma](https://www.figma.com/design/gHGX7tGty8VM8reyGkj96e/Untitled?node-id=1-317&embed-host=share)
 !  
 
 
