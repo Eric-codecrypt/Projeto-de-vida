@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8b91091e-6319-4979-8573-7429aedbc059" name="Changes" comment="07/05 update">
-      <change afterPath="$PROJECT_DIR$/.github/workflows/last-repo.yml" afterDir="false" />
+    <list default="true" id="8b91091e-6319-4979-8573-7429aedbc059" name="Changes" comment="github action">
+      <change beforePath="$PROJECT_DIR$/.github/workflows/last-repo.yml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -25,6 +25,7 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="PUSH_AUTO_UPDATE" value="true" />
     <option name="PUSH_TAGS">
       <GitPushTagMode>
         <option name="argument" value="--tags" />
@@ -107,7 +108,7 @@
       <workItem from="1746616215112" duration="29000" />
       <workItem from="1746616250812" duration="17910000" />
       <workItem from="1746792170801" duration="5930000" />
-      <workItem from="1746798967975" duration="1457000" />
+      <workItem from="1746798967975" duration="1999000" />
     </task>
     <task id="LOCAL-00001" summary="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
       <option name="closed" value="true" />
@@ -157,7 +158,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746643831542</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="github action">
+      <option name="closed" value="true" />
+      <created>1746808972256</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1746808972256</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -166,6 +175,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar" />
     <MESSAGE value="07/05 update" />
-    <option name="LAST_COMMIT_MESSAGE" value="07/05 update" />
+    <MESSAGE value="github action" />
+    <option name="LAST_COMMIT_MESSAGE" value="github action" />
   </component>
 </project>
