@@ -121,6 +121,8 @@
       <workItem from="1747421462938" duration="216000" />
       <workItem from="1747823015542" duration="17000" />
       <workItem from="1747833645070" duration="1285000" />
+      <workItem from="1747850141066" duration="67000" />
+      <workItem from="1748005400769" duration="7000" />
     </task>
     <task id="LOCAL-00001" summary="user update e add coisas a mais, usertest.php retém features futuras q eu posso ou não adicionar">
       <option name="closed" value="true" />
@@ -194,7 +196,15 @@
       <option name="project" value="LOCAL" />
       <updated>1747421595567</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="class 16/05">
+      <option name="closed" value="true" />
+      <created>1747850197297</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1747850197297</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
